@@ -156,3 +156,6 @@ cython_debug/
 
 # Specific project files
 dialer.db*
+
+# Editor directories and files
+.vscode/

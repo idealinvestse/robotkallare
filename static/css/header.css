@@ -1,0 +1,155 @@
+/* Header Styles */
+
+header {
+    background-color: var(--primary-dark);
+    padding: 15px 0;
+    box-shadow: var(--shadow-medium);
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-content h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.operator-panel {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.operator-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--success-color);
+}
+
+.status-indicator.warning {
+    background-color: var(--warning-color);
+}
+
+.status-indicator.danger {
+    background-color: var(--danger-color);
+}
+
+.header-links {
+    display: flex;
+    gap: 15px;
+    margin-right: 20px;
+}
+
+.header-link {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: white;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    font-size: 14px;
+}
+
+.header-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.header-link svg {
+    opacity: 0.8;
+}
+
+/* Notification system */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 4px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--shadow-medium);
+    z-index: 9999;
+    max-width: 350px;
+    animation: notification-slide-in 0.3s ease-out;
+}
+
+.notification.fadeout {
+    animation: notification-fade-out 0.5s ease-out forwards;
+}
+
+.notification.info {
+    background-color: var(--primary-color);
+}
+
+.notification.success {
+    background-color: var(--success-color);
+}
+
+.notification.warning {
+    background-color: var(--warning-color);
+}
+
+.notification.error {
+    background-color: var(--danger-color);
+}
+
+@keyframes notification-slide-in {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes notification-fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* Responsive header */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    
+    .operator-panel {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .header-links {
+        margin-right: 0;
+    }
+}

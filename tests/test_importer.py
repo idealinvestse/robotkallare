@@ -13,10 +13,8 @@ def test_validate_e164():
 
 def test_import_csv(session: Session):
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".csv") as f:
-        f.write("name,phone1,phone2
-")
-        f.write("John Doe,+46701234567,+46709876543
-")
+        f.write("name,phone1,phone2\n")
+        f.write("John Doe,+46701234567,+46709876543\n")
         f.flush()
         import_csv(Path(f.name))
     contacts = session.exec(Contact.select()).all()

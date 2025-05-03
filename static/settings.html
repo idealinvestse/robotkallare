@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inställningar - Nödlarmsystem</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/ringbot/static/css/styles.css">
+    <link rel="stylesheet" href="/ringbot/static/css/header.css">
+    <link rel="stylesheet" href="/ringbot/static/css/settings.css">
+    <script src="/ringbot/static/translations_sv.js"></script>
+    <script src="/ringbot/static/translations_en.js"></script>
+    <script src="/ringbot/static/translations.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1 id="header-title" data-i18n="settings">Inställningar</h1>
+            <div class="operator-panel">
+                <div class="operator-status">
+                    <span class="status-indicator"></span>
+                    <span id="system-status" data-i18n="systemReady">System redo</span>
+                </div>
+                <div class="header-links">
+                    <a href="/" class="header-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                        <span data-i18n="dashboard">Dashboard</span>
+                    </a>
+                    <a href="/ringbot/static/group-messenger.html" class="header-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span data-i18n="groupMessenger">Gruppmeddelanden</span>
+                    </a>
+                </div>
+                <div class="language-selector">
+                    <select id="language-select" style="padding: 5px; border-radius: 4px; border: 1px solid #ddd;">
+                        <option value="sv">Svenska</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="panel-header">
+            <h2 data-i18n="systemSettings">Systeminställningar</h2>
+            <div class="button-panel">
+                <button id="refreshSettings" class="secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"></path><path d="M23 20v-6h-6"></path><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+                    <span data-i18n="refresh">Uppdatera</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Settings navigation -->
+        <div class="settings-navigation">
+            <button class="settings-nav-button active" data-settings-section="system" data-i18n="generalSettings">Allmänna inställningar</button>
+            <button class="settings-nav-button" data-settings-section="callbots" data-i18n="callBotsSettings">Robotsamtalsinställningar</button>
+            <button class="settings-nav-button" data-settings-section="dtmf" data-i18n="dtmfSettings">DTMF-inställningar</button>
+            <button class="settings-nav-button" data-settings-section="sms" data-i18n="smsSettings">SMS-inställningar</button>
+            <button class="settings-nav-button" data-settings-section="notifications" data-i18n="notificationSettings">Aviseringsinställningar</button>
+            <button class="settings-nav-button" data-settings-section="security" data-i18n="securitySettings">Säkerhetsinställningar</button>
+        </div>
+        
+        <!-- System settings section -->
+        <div class="settings-section active" id="system-settings-section">
+            <div class="info-box">
+                <p data-i18n="systemSettingsInfo">Dessa inställningar styr systembeteendet och kan påverka alla delar av GDial.</p>
+            </div>
+            
+            <div class="settings-groups-container" id="settingsGroupsContainer">
+                <!-- Settings groups will be populated here -->
+                <div class="loading-indicator" data-i18n="loadingSettings">Laddar inställningar...</div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" id="saveSystemSettings" data-i18n="saveChanges">Spara ändringar</button>
+            </div>
+        </div>
+        
+        <!-- Call Bots settings section -->
+        <div class="settings-section" id="callbots-settings-section">
+            <div class="info-box">
+                <p data-i18n="callBotsSettingsInfo">Hantera hur systemet använder flera robotar för att effektivt ringa nödsamtal.</p>
+            </div>
+            
+            <form id="callBotsSettingsForm" class="settings-form">
+                <h3>Basinställningar</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="callBotsCount" data-i18n="callBotsCount">Antal samtalsrobotar</label>
+                        <input type="number" id="callBotsCount" min="1" max="100" value="3">
+                        <div class="help-text" data-i18n="callBotsCountHelp">Antal robotar som körs parallellt vid nödsamtal</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="callsPerBot" data-i18n="callsPerBot">Samtal per robot</label>
+                        <input type="number" id="callsPerBot" min="1" max="100" value="20">
+                        <div class="help-text" data-i18n="callsPerBotHelp">Maximalt antal samtidiga samtal varje robot kan hantera</div>
+                    </div>
+                </div>
+                
+                <h3>Avancerade inställningar</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="queueMaxSize" data-i18n="queueMaxSize">Maxstorlek på kö</label>
+                        <input type="number" id="queueMaxSize" min="100" max="10000" value="1000">
+                        <div class="help-text">Maximalt antal samtal som kan stå i kö samtidigt</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="queueScalingFactor" data-i18n="queueScalingFactor">Skalfaktor för kön</label>
+                        <input type="number" id="queueScalingFactor" min="5" max="100" value="20" step="5">
+                        <div class="help-text">Antal meddelanden i kön per robotinstans (högre värde = färre robotar)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="workerStartupTime" data-i18n="workerStartupTime">Starttid för robot (sek)</label>
+                        <input type="number" id="workerStartupTime" min="1" max="60" value="5">
+                        <div class="help-text">Uppskattat antal sekunder för en ny robotinstans att starta</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="callRetryAttempts" data-i18n="callRetryAttempts">Återförsök per samtal</label>
+                        <input type="number" id="callRetryAttempts" min="0" max="5" value="2">
+                        <div class="help-text">Antal återförsök om ett samtal misslyckas</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="callRetryDelay" data-i18n="callRetryDelay">Fördröjning mellan återförsök (sek)</label>
+                        <input type="number" id="callRetryDelay" min="5" max="300" value="60">
+                        <div class="help-text">Tid att vänta innan ett samtal görs om</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="callTimeout" data-i18n="callTimeout">Samtalstimeout (sek)</label>
+                        <input type="number" id="callTimeout" min="10" max="120" value="30">
+                        <div class="help-text">Antal sekunder innan ett obesvarat samtal avbryts</div>
+                    </div>
+                </div>
+                
+                <h3>Skalningsregler</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="minReplicas" data-i18n="minReplicas">Minsta antal instanser</label>
+                        <input type="number" id="minReplicas" min="1" max="10" value="1">
+                        <div class="help-text">Minsta antal aktiva robotinstanser även utan trafik</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="maxReplicas" data-i18n="maxReplicas">Högsta antal instanser</label>
+                        <input type="number" id="maxReplicas" min="1" max="100" value="50">
+                        <div class="help-text">Högsta tillåtna antal parallella robotinstanser</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="scalingMetric" data-i18n="scalingMetric">Skalningsmetrik</label>
+                        <select id="scalingMetric">
+                            <option value="queue_length">Kölängd</option>
+                            <option value="active_calls">Aktiva samtal</option>
+                            <option value="combined">Kombinerad</option>
+                        </select>
+                        <div class="help-text">Vilken metrik som ska användas för att skala antalet robotar</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="scaleDownDelay" data-i18n="scaleDownDelay">Nedskalningstid (min)</label>
+                        <input type="number" id="scaleDownDelay" min="1" max="30" value="5">
+                        <div class="help-text">Minuter att vänta innan nedskalning av robotar</div>
+                    </div>
+                </div>
+                
+                <h3>Meddelandekö</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="queueType" data-i18n="queueType">Kötyp</label>
+                        <select id="queueType">
+                            <option value="rabbitmq">RabbitMQ</option>
+                            <option value="internal">Intern</option>
+                        </select>
+                        <div class="help-text">Typ av meddelandekö för samtalsjobb</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="queueHost" data-i18n="queueHost">Köhost</label>
+                        <input type="text" id="queueHost" value="localhost">
+                        <div class="help-text">Värdadress för meddelandekön (t.ex. localhost, rabbitmq)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="queuePort" data-i18n="queuePort">Köport</label>
+                        <input type="number" id="queuePort" min="1" max="65535" value="5672">
+                        <div class="help-text">Port för anslutning till meddelandekön</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="queueName" data-i18n="queueName">Könamn</label>
+                        <input type="text" id="queueName" value="ringbot.jobs">
+                        <div class="help-text">Namn på kön för samtalsjobb</div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" data-i18n="saveChanges">Spara ändringar</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- DTMF settings section -->
+        <div class="settings-section" id="dtmf-settings-section">
+            <div class="info-box">
+                <p data-i18n="dtmfSettingsInfo">Dessa inställningar styr hur DTMF-svar hanteras i nödsamtal.</p>
+            </div>
+            
+            <form id="dtmfSettingsForm" class="settings-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="maxAttempts" data-i18n="maxAttempts">Max antal försök</label>
+                        <input type="number" id="maxAttempts" min="1" max="10">
+                        <div class="help-text" data-i18n="maxAttemptsHelp">Maximalt antal försök för DTMF-inmatning innan samtalet avslutas</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inputTimeout" data-i18n="inputTimeout">Inmatningstimeout (sek)</label>
+                        <input type="number" id="inputTimeout" min="3" max="60">
+                        <div class="help-text" data-i18n="inputTimeoutHelp">Antal sekunder att vänta på DTMF-inmatning innan samtalet avslutas</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="confirmResponse">
+                            <span data-i18n="confirmResponse">Bekräfta svar</span>
+                        </label>
+                        <div class="help-text" data-i18n="confirmResponseHelp">Begär bekräftelse på DTMF-svar ('Du tryckte på X. Är detta korrekt?')</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="retryOnInvalid">
+                            <span data-i18n="retryOnInvalid">Försök igen vid ogiltigt</span>
+                        </label>
+                        <div class="help-text" data-i18n="retryOnInvalidHelp">Tillåt ny inmatning om ogiltig siffra trycks in</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="additionalDigits" data-i18n="additionalDigits">Ytterligare siffror</label>
+                        <input type="text" id="additionalDigits" maxlength="10">
+                        <div class="help-text" data-i18n="additionalDigitsHelp">Ytterligare siffror som accepteras utöver de grundläggande 1,2,3</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="universalGather">
+                            <span data-i18n="universalGather">Universell insamling</span>
+                        </label>
+                        <div class="help-text" data-i18n="universalGatherHelp">Lägg till insamlingsfunktionalitet till alla utgående meddelanden</div>
+                    </div>
+
+                    <!-- New DTMF settings fields -->
+                    <div class="form-group">
+                        <label for="repeatMessageDigit" data-i18n="repeatMessageDigit">Upprepa-meddelande-siffra</label>
+                        <input type="text" id="repeatMessageDigit" maxlength="1">
+                        <div class="help-text" data-i18n="repeatMessageDigitHelp">Siffra att trycka för att upprepa meddelandet (normalt 0)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmReceiptDigit" data-i18n="confirmReceiptDigit">Bekräfta-mottagande-siffra</label>
+                        <input type="text" id="confirmReceiptDigit" maxlength="1">
+                        <div class="help-text" data-i18n="confirmReceiptDigitHelp">Siffra att trycka för att bekräfta mottagande av meddelande (normalt 1)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="requestCallbackDigit" data-i18n="requestCallbackDigit">Begär-återuppringning-siffra</label>
+                        <input type="text" id="requestCallbackDigit" maxlength="1">
+                        <div class="help-text" data-i18n="requestCallbackDigitHelp">Siffra att trycka för att begära återuppringning (normalt 8)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transferToLiveAgentDigit" data-i18n="transferToLiveAgentDigit">Överför-till-operatör-siffra</label>
+                        <input type="text" id="transferToLiveAgentDigit" maxlength="1">
+                        <div class="help-text" data-i18n="transferToLiveAgentDigitHelp">Siffra att trycka för att överföras till en operatör (normalt 9)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dtmfMenuStyle" data-i18n="dtmfMenuStyle">DTMF-menystil</label>
+                        <select id="dtmfMenuStyle">
+                            <option value="standard" data-i18n="menuStyleStandard">Standard</option>
+                            <option value="concise" data-i18n="menuStyleConcise">Koncis</option>
+                            <option value="detailed" data-i18n="menuStyleDetailed">Detaljerad</option>
+                        </select>
+                        <div class="help-text" data-i18n="dtmfMenuStyleHelp">Hur DTMF-menyn presenteras i röstmeddelanden</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="interDigitTimeout" data-i18n="interDigitTimeout">Timeout mellan siffror (sek)</label>
+                        <input type="number" id="interDigitTimeout" min="1" max="10">
+                        <div class="help-text" data-i18n="interDigitTimeoutHelp">Antal sekunder mellan siffertryckningar innan inmatningen anses avslutad</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="allowMessageSkip">
+                            <span data-i18n="allowMessageSkip">Tillåt att hoppa över meddelande</span>
+                        </label>
+                        <div class="help-text" data-i18n="allowMessageSkipHelp">Tillåt användare att hoppa över meddelandet med #-knappen</div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" data-i18n="saveChanges">Spara ändringar</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- SMS settings section -->
+        <div class="settings-section" id="sms-settings-section">
+            <div class="info-box">
+                <p data-i18n="smsSettingsInfo">Dessa inställningar styr hur SMS-meddelanden formateras och skickas.</p>
+            </div>
+            
+            <form id="smsSettingsForm" class="settings-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="includeSenderName">
+                            <span data-i18n="includeSenderName">Inkludera avsändarnamn</span>
+                        </label>
+                        <div class="help-text" data-i18n="includeSenderNameHelp">Lägg till systemets namn i början av SMS-meddelanden</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="messagePrefix" data-i18n="messagePrefix">Meddelandeprefix</label>
+                        <input type="text" id="messagePrefix">
+                        <div class="help-text" data-i18n="messagePrefixHelp">Text som läggs till i början av varje SMS-meddelande</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="messageSuffix" data-i18n="messageSuffix">Meddelandesuffix</label>
+                        <input type="text" id="messageSuffix">
+                        <div class="help-text" data-i18n="messageSuffixHelp">Text som läggs till i slutet av varje SMS-meddelande</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="maxLength" data-i18n="maxLength">Maxlängd</label>
+                        <input type="number" id="maxLength" min="50" max="1600">
+                        <div class="help-text" data-i18n="maxLengthHelp">Maximal längd för SMS-meddelanden (standard är 160 tecken)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="splitLongMessages">
+                            <span data-i18n="splitLongMessages">Dela långa meddelanden</span>
+                        </label>
+                        <div class="help-text" data-i18n="splitLongMessagesHelp">Dela automatiskt meddelanden som överskrider maxlängden</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="batchDelayMs" data-i18n="batchDelayMs">Batchfördröjning (ms)</label>
+                        <input type="number" id="batchDelayMs" min="0" max="10000" step="100">
+                        <div class="help-text" data-i18n="batchDelayMsHelp">Fördröjning mellan att skicka grupper av SMS-meddelanden</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="batchSize" data-i18n="batchSize">Batchstorlek</label>
+                        <input type="number" id="batchSize" min="1" max="100">
+                        <div class="help-text" data-i18n="batchSizeHelp">Antal meddelanden per batch</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="statusCallbackUrl" data-i18n="statusCallbackUrl">Status-callback URL</label>
+                        <input type="text" id="statusCallbackUrl">
+                        <div class="help-text" data-i18n="statusCallbackUrlHelp">URL för att ta emot callbacks om leveransstatus för SMS</div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" data-i18n="saveChanges">Spara ändringar</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Notification settings section -->
+        <div class="settings-section" id="notifications-settings-section">
+            <div class="info-box">
+                <p data-i18n="notificationSettingsInfo">Dessa inställningar styr hur och när systemaviseringar skickas till administratörer.</p>
+            </div>
+            
+            <form id="notificationSettingsForm" class="settings-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="adminEmail" data-i18n="adminEmail">Admin-e-post</label>
+                        <input type="email" id="adminEmail">
+                        <div class="help-text" data-i18n="adminEmailHelp">E-postadress för systemadministratören</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="notifyOnEmergency">
+                            <span data-i18n="notifyOnEmergency">Avisera vid nödläge</span>
+                        </label>
+                        <div class="help-text" data-i18n="notifyOnEmergencyHelp">Skicka avisering till administratören när nödsamtal startas</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="notifyOnError">
+                            <span data-i18n="notifyOnError">Avisera vid fel</span>
+                        </label>
+                        <div class="help-text" data-i18n="notifyOnErrorHelp">Skicka avisering till administratören vid systemfel</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="failureThresholdPct" data-i18n="failureThresholdPct">Feltröskel (%)</label>
+                        <input type="number" id="failureThresholdPct" min="1" max="100">
+                        <div class="help-text" data-i18n="failureThresholdPctHelp">Skicka avisering när samtal/SMS misslyckas över denna procentnivå</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="dailyReports">
+                            <span data-i18n="dailyReports">Dagliga rapporter</span>
+                        </label>
+                        <div class="help-text" data-i18n="dailyReportsHelp">Skicka dagliga statusrapporter till administratören</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="weeklyReports">
+                            <span data-i18n="weeklyReports">Veckovisa rapporter</span>
+                        </label>
+                        <div class="help-text" data-i18n="weeklyReportsHelp">Skicka veckovisa sammanfattningsrapporter till administratören</div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" data-i18n="saveChanges">Spara ändringar</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Security settings section -->
+        <div class="settings-section" id="security-settings-section">
+            <div class="info-box">
+                <p data-i18n="securitySettingsInfo">Konfigurera säkerhetsinställningar för GDial-systemet.</p>
+            </div>
+            
+            <form id="securitySettingsForm" class="settings-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="forceHttps">
+                            <span data-i18n="forceHttps">Kräv HTTPS</span>
+                        </label>
+                        <div class="help-text" data-i18n="forceHttpsHelp">Kräv HTTPS för alla anslutningar</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="sensitiveDataMasking">
+                            <span data-i18n="sensitiveDataMasking">Maskering av känslig data</span>
+                        </label>
+                        <div class="help-text" data-i18n="sensitiveDataMaskingHelp">Maskera känslig data i loggar och visningar</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="autoLogoutInactiveMin" data-i18n="autoLogoutInactiveMin">Automatisk utloggning (minuter)</label>
+                        <input type="number" id="autoLogoutInactiveMin" min="5" max="240">
+                        <div class="help-text" data-i18n="autoLogoutInactiveMinHelp">Minuter av inaktivitet innan automatisk utloggning</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="maxLoginAttempts" data-i18n="maxLoginAttempts">Max inloggningsförsök</label>
+                        <input type="number" id="maxLoginAttempts" min="1" max="10">
+                        <div class="help-text" data-i18n="maxLoginAttemptsHelp">Maximalt antal misslyckade inloggningsförsök innan kontot låses</div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" data-i18n="saveChanges">Spara ändringar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="output" class="output"></div>
+    
+    <script src="/ringbot/static/js/phone-validator.js"></script>
+    <script src="/ringbot/static/js/settings_ui.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize settings navigation
+            initializeSettingsNavigation();
+            
+            // Load all settings data
+            loadAllSettings();
+            
+            // Add event listeners to refresh and save buttons
+            document.getElementById('refreshSettings').addEventListener('click', loadAllSettings);
+            document.getElementById('saveSystemSettings').addEventListener('click', saveSystemSettings);
+            
+            // Add form submit handlers
+            document.getElementById('dtmfSettingsForm').addEventListener('submit', saveDtmfSettings);
+            document.getElementById('smsSettingsForm').addEventListener('submit', saveSmsSettings);
+            document.getElementById('notificationSettingsForm').addEventListener('submit', saveNotificationSettings);
+            document.getElementById('securitySettingsForm').addEventListener('submit', saveSecuritySettings);
+            
+            // Apply translations 
+            if (typeof applyBasicTranslations === 'function') {
+                applyBasicTranslations();
+            }
+        });
+    </script>
+</body>
+</html>

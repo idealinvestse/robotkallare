@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nödlarmsystem - Gruppmeddelanden</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/ringbot/static/css/styles.css">
+    <link rel="stylesheet" href="/ringbot/static/css/header.css">
+    <link rel="stylesheet" href="/ringbot/static/css/group-messenger.css?v=1.1">
+    <script src="/ringbot/static/translations_sv.js"></script>
+    <script src="/ringbot/static/translations_en.js"></script>
+    <script src="/ringbot/static/translations.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1 data-i18n="groupMessenger">Nödlarmsystem Gruppmeddelanden</h1>
+            <div class="operator-panel">
+                <div class="operator-status">
+                    <span class="status-indicator"></span>
+                    <span id="system-status">System redo</span>
+                </div>
+                <div class="language-selector">
+                    <select id="language-select">
+                        <option value="sv">Svenska</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="nav-tabs">
+            <button class="tab-button active" data-tab="messenger-tab">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span data-i18n="groupMessenger">Gruppmeddelanden</span>
+            </button>
+            <button class="tab-button" data-tab="runs-tab">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                <span data-i18n="callLogs">Samtalslogg</span>
+            </button>
+            <a href="/ringbot/static/dashboard.html" class="tab-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Dashboard
+            </a>
+            <a href="/" class="tab-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Classic View
+            </a>
+        </div>
+        
+        <div class="tab-content">
+            <div id="messenger-tab" class="tab-pane active">
+                <div class="group-messenger">
+                    <div class="messenger-header">
+                        <h2>Group Messenger</h2>
+                        <p>Send voice calls or SMS messages to contacts individually or in groups, with real-time status tracking and delivery monitoring.</p>
+                    </div>
+                    
+                    <div class="messenger-controls">
+                        <div class="control-group">
+                            <label for="message-type-select">Message Type</label>
+                            <select id="message-type-select">
+                                <option value="voice">Voice Call</option>
+                                <option value="sms">SMS</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="message-select">Message</label>
+                            <select id="message-select">
+                                <option value="" selected disabled>Select a message</option>
+                            </select>
+                            <div id="message-preview" class="message-preview"></div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="group-select">Contact Group</label>
+                            <select id="group-select">
+                                <option value="" selected>All Contacts</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="status-counter" id="status-counter">
+                        <div>
+                            <span class="counter-icon selected-icon"></span>
+                            Selected: <strong>0/0</strong>
+                        </div>
+                        <div>
+                            <span class="counter-icon sending-icon"></span>
+                            Sending: <strong>0</strong>
+                        </div>
+                        <div>
+                            <span class="counter-icon success-icon"></span>
+                            Success: <strong>0</strong>
+                        </div>
+                        <div>
+                            <span class="counter-icon failed-icon"></span>
+                            Failed: <strong>0</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="messenger-actions">
+                        <button id="select-all-contacts" class="secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            Select All
+                        </button>
+                        <button id="deselect-all-contacts" class="secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="15" y1="9" x2="9" y2="15"></line>
+                                <line x1="9" y1="9" x2="15" y2="15"></line>
+                            </svg>
+                            Deselect All
+                        </button>
+                        <button id="refresh-contacts" class="secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 4v6h-6"></path>
+                                <path d="M1 20v-6h6"></path>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                                <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                            </svg>
+                            Refresh
+                        </button>
+                        <button id="send-to-selected" class="primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                            Send to Selected
+                        </button>
+                        <button id="debug-send" class="secondary" style="background-color: #ff5722; color: white;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="16"></line>
+                                <line x1="8" y1="12" x2="16" y2="12"></line>
+                            </svg>
+                            Force Send
+                        </button>
+                    </div>
+                    
+                    <div class="contact-filters">
+                        <div class="contact-search">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <input type="text" id="contact-search" placeholder="Search by name, email, phone, group, or ID...">
+                        </div>
+                    </div>
+                    
+                    <div class="filter-chips" id="filter-chips">
+                        <div class="filter-chip active" data-filter="all">All</div>
+                        <div class="filter-chip" data-filter="pending">Pending</div>
+                        <div class="filter-chip" data-filter="sending">Sending</div>
+                        <div class="filter-chip" data-filter="success">Success</div>
+                        <div class="filter-chip" data-filter="failed">Failed</div>
+                    </div>
+                    
+                    <!-- Loading state -->
+                    <div class="contact-cards-loading" id="loading-indicator">
+                        <div class="spinner"></div>
+                    </div>
+                    
+                    <!-- Empty state -->
+                    <div class="empty-results" id="empty-results" style="display: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <h3>No contacts found</h3>
+                        <p>Try changing your search term or filters, or select a different group.</p>
+                    </div>
+                    
+                    <div class="contact-cards-container" id="contact-cards-container">
+                        <!-- Contact cards will be generated dynamically -->
+                    </div>
+                </div>
+            </div>
+            
+            <div id="runs-tab" class="tab-pane">
+                <div class="call-runs-manager">
+                    <div class="messenger-header">
+                        <h2>Voice Call Runs</h2>
+                        <p>View and manage active and completed call runs with detailed statistics and logs.</p>
+                    </div>
+                    
+                    <div class="call-runs-filters">
+                        <div class="filters-row">
+                            <div class="filter-group">
+                                <label for="run-status-filter">Status</label>
+                                <select id="run-status-filter">
+                                    <option value="all">All Runs</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="run-date-filter">Date Range</label>
+                                <select id="run-date-filter">
+                                    <option value="all">All Time</option>
+                                    <option value="today">Today</option>
+                                    <option value="week">Last 7 Days</option>
+                                    <option value="month">Last 30 Days</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <button id="refresh-runs" class="secondary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M23 4v6h-6"></path>
+                                        <path d="M1 20v-6h6"></path>
+                                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                                        <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                                    </svg>
+                                    Refresh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="call-runs-list" id="call-runs-list">
+                        <!-- Call runs will be generated dynamically -->
+                        <div class="empty-state">
+                            No call runs to display
+                        </div>
+                    </div>
+                    
+                    <div class="call-run-detail" id="call-run-detail">
+                        <div class="detail-header">
+                            <h3>Call Run Details</h3>
+                            <div class="close-button" id="close-detail">×</div>
+                        </div>
+                        <div class="detail-content">
+                            <div class="detail-summary">
+                                <div class="summary-row">
+                                    <span class="label">Name:</span>
+                                    <span class="value" id="detail-name">-</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span class="label">Status:</span>
+                                    <span class="value" id="detail-status">-</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span class="label">Started:</span>
+                                    <span class="value" id="detail-started">-</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span class="label">Completed:</span>
+                                    <span class="value" id="detail-completed-date">-</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span class="label">Total Calls:</span>
+                                    <span class="value" id="detail-total">-</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span class="label">Completed:</span>
+                                    <span class="value" id="detail-completed">-</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span class="label">Answered:</span>
+                                    <span class="value" id="detail-answered">-</span>
+                                </div>
+                            </div>
+                            
+                            <div class="detail-progress">
+                                <div class="progress-label">
+                                    <span>Completion Progress</span>
+                                    <span id="detail-progress-text">0%</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" id="detail-progress"></div>
+                                </div>
+                            </div>
+                            
+                            <h4>Call Log</h4>
+                            <div class="call-log-container" id="call-log-container">
+                                <!-- Call logs will be generated dynamically -->
+                                <table class="call-log-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Contact</th>
+                                            <th>Phone</th>
+                                            <th>Status</th>
+                                            <th>Started</th>
+                                            <th>Answered</th>
+                                            <th>DTMF Input</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="call-log-tbody">
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="detail-actions">
+                                <button id="refresh-detail" class="refresh-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M23 4v6h-6"></path>
+                                        <path d="M1 20v-6h6"></path>
+                                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                                        <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                                    </svg>
+                                    Refresh Details
+                                </button>
+                                <button id="export-logs" class="refresh-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Export CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Progress Tracking Modal -->
+    <div class="progress-overlay" id="progress-overlay" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background-color:rgba(0,0,0,0.8); z-index:9999; display:none; justify-content:center; align-items:center;">
+        <div class="progress-window" style="position:relative; width:600px; max-width:90%; background:white; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2); overflow:hidden; margin:auto;">
+            <div class="progress-header">
+                <h3 id="progress-title">Message Progress</h3>
+                <div class="close-button" id="progress-close">×</div>
+            </div>
+            <div class="progress-content">
+                <div class="progress-status" id="progress-status">Initializing...</div>
+                <div class="progress-details" id="progress-details"></div>
+                <div class="progress-bar-wrapper">
+                    <div class="progress-label">
+                        <span>Progress</span>
+                        <span id="progress-percentage">0%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-actions">
+                <button id="progress-minimize-btn" class="progress-minimize-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Minimize
+                </button>
+                <button id="progress-close-btn" class="progress-close-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Minimized Progress Bar -->
+    <div class="mini-progress" id="mini-progress">
+        <div class="mini-progress-text">Sending: 45%</div>
+        <div class="mini-progress-bar">
+            <div class="mini-progress-fill" id="mini-progress-fill"></div>
+        </div>
+    </div>
+    
+    <script src="/ringbot/static/js/group-messenger.js?v=1.2"></script>
+    <script>
+        // Wait for DOM to be fully loaded
+        window.addEventListener('load', function() {
+            console.log("Window fully loaded - initializing Group Messenger v1.2");
+            
+            // First ensure all tabs are correctly setup
+            setupTabs();
+            
+            // Initialize main component with a slight delay to ensure DOM is ready
+            setTimeout(initializeMessenger, 100);
+        });
+        
+        // Initialize tab functionality
+        function setupTabs() {
+            console.log("Setting up tabs");
+            const tabButtons = document.querySelectorAll('.tab-button:not(a)');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            
+            // Ensure at least one tab is active
+            let hasActive = false;
+            tabPanes.forEach(pane => {
+                if (pane.classList.contains('active')) {
+                    hasActive = true;
+                    console.log(`Active tab found: ${pane.id}`);
+                }
+            });
+            
+            if (!hasActive && tabPanes.length > 0) {
+                console.log("No active tab found, activating first tab");
+                tabPanes[0].classList.add('active');
+                if (tabButtons.length > 0) {
+                    tabButtons[0].classList.add('active');
+                }
+            }
+            
+            // Set up click handlers
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    console.log(`Tab clicked: ${tabId}`);
+                    
+                    // Deactivate all tabs
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabPanes.forEach(pane => pane.classList.remove('active'));
+                    
+                    // Activate the selected tab
+                    this.classList.add('active');
+                    const targetPane = document.getElementById(tabId);
+                    if (targetPane) {
+                        targetPane.classList.add('active');
+                        console.log(`Activated tab: ${tabId}`);
+                    } else {
+                        console.error(`Target tab pane not found: ${tabId}`);
+                    }
+                    
+                    // If switching to call runs tab, refresh the list
+                    if (tabId === 'runs-tab' && window.messengerInstance && window.messengerInstance.refreshCallRuns) {
+                        window.messengerInstance.refreshCallRuns();
+                    }
+                });
+            });
+        }
+        
+        // Initialize the messenger component
+        function initializeMessenger() {
+            console.log("Initializing messenger component");
+            
+            // Setup UI components
+            setupProgressModal();
+            setupFilterChips();
+            
+            // Initialize the messenger component with options
+            window.messengerInstance = initGroupMessenger({
+                progressOverlayId: 'progress-overlay',
+                progressBarId: 'progress-bar',
+                progressTitleId: 'progress-title',
+                progressStatusId: 'progress-status',
+                progressDetailsId: 'progress-details',
+                progressPercentageId: 'progress-percentage',
+                miniProgressId: 'mini-progress',
+                miniProgressFillId: 'mini-progress-fill',
+                loadingIndicatorId: 'loading-indicator',
+                emptyResultsId: 'empty-results',
+                messagePreviewId: 'message-preview'
+            });
+            
+            console.log("Messenger component initialized");
+            
+            // Set up refresh contacts button
+            const refreshButton = document.getElementById('refresh-contacts');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', function() {
+                    console.log("Refresh button clicked");
+                    if (window.messengerInstance) {
+                        if (window.messengerInstance.refresh) {
+                            window.messengerInstance.refresh();
+                        }
+                        // Force UI refresh after data refresh
+                        setTimeout(function() {
+                            if (window.messengerInstance.forceRefresh) {
+                                window.messengerInstance.forceRefresh();
+                            }
+                        }, 500);
+                    }
+                });
+            }
+            
+            // Set up language preferences
+            setupLanguage();
+            
+            // Create notification system
+            setupNotifications();
+            
+            // Force refresh the UI after initialization
+            setTimeout(function() {
+                if (window.messengerInstance) {
+                    if (window.messengerInstance.forceRefresh) {
+                        window.messengerInstance.forceRefresh();
+                        console.log("Auto-refreshed UI after initialization");
+                    }
+                    
+                    // After another delay, use emergency render if needed
+                    setTimeout(function() {
+                        // Get debug info
+                        if (window.messengerInstance.debug) {
+                            const debugInfo = window.messengerInstance.debug();
+                            console.log("UI Debug Info:", debugInfo);
+                            
+                            // If container is not visible or contacts not showing, use emergency render
+                            if (debugInfo.containerVisible === 'none' || 
+                                (debugInfo.contacts > 0 && document.querySelectorAll('.contact-card').length === 0)) {
+                                console.log("UI elements not visible, using emergency render");
+                                if (window.messengerInstance.forceRender) {
+                                    window.messengerInstance.forceRender();
+                                }
+                            }
+                            
+                            // Set up debug button event handler directly from HTML
+                            const debugBtn = document.getElementById('debug-send');
+                            if (debugBtn) {
+                                console.log("Setting up additional debug button handler");
+                                debugBtn.addEventListener('click', function(e) {
+                                    e.stopPropagation(); // Stop event propagation
+                                    console.log("Debug button clicked in HTML script");
+                                    
+                                    // Directly fix the progress overlay
+                                    const progressOverlay = document.getElementById('progress-overlay');
+                                    if (progressOverlay) {
+                                        progressOverlay.style.position = 'fixed';
+                                        progressOverlay.style.top = '0';
+                                        progressOverlay.style.left = '0';
+                                        progressOverlay.style.width = '100vw';
+                                        progressOverlay.style.height = '100vh';
+                                        progressOverlay.style.backgroundColor = 'rgba(0,0,0,0.8)';
+                                        progressOverlay.style.zIndex = '9999';
+                                        progressOverlay.style.display = 'flex';
+                                        progressOverlay.style.justifyContent = 'center';
+                                        progressOverlay.style.alignItems = 'center';
+                                        console.log("Progress overlay styles fixed");
+                                    }
+                                });
+                            }
+                        }
+                    }, 1500);
+                }
+            }, 1000);
+        }
+        
+        // Setup progress modal
+        function setupProgressModal() {
+            const progressOverlay = document.getElementById('progress-overlay');
+            const progressClose = document.getElementById('progress-close');
+            const progressCloseBtn = document.getElementById('progress-close-btn');
+            const progressMinimizeBtn = document.getElementById('progress-minimize-btn');
+            const miniProgress = document.getElementById('mini-progress');
+            
+            if (progressClose) {
+                progressClose.addEventListener('click', function() {
+                    if (progressOverlay) progressOverlay.classList.remove('active');
+                });
+            }
+            
+            if (progressCloseBtn) {
+                progressCloseBtn.addEventListener('click', function() {
+                    if (progressOverlay) progressOverlay.classList.remove('active');
+                });
+            }
+            
+            if (progressMinimizeBtn) {
+                progressMinimizeBtn.addEventListener('click', function() {
+                    if (progressOverlay) progressOverlay.classList.remove('active');
+                    if (miniProgress) miniProgress.classList.add('active');
+                });
+            }
+            
+            if (miniProgress) {
+                miniProgress.addEventListener('click', function() {
+                    if (progressOverlay) progressOverlay.classList.add('active');
+                    miniProgress.classList.remove('active');
+                });
+            }
+        }
+        
+        // Setup filter chips
+        function setupFilterChips() {
+            const filterChips = document.querySelectorAll('.filter-chip');
+            
+            filterChips.forEach(chip => {
+                chip.addEventListener('click', function() {
+                    // Toggle active state for this chip
+                    filterChips.forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Apply the filter
+                    const filter = this.getAttribute('data-filter');
+                    if (window.messengerInstance && window.messengerInstance.applyStatusFilter) {
+                        window.messengerInstance.applyStatusFilter(filter);
+                    }
+                });
+            });
+        }
+        
+        // Setup language
+        function setupLanguage() {
+            const languageSelect = document.getElementById('language-select');
+            if (languageSelect) {
+                languageSelect.addEventListener('change', function(e) {
+                    setLanguage(e.target.value);
+                });
+                
+                // Initialize with saved preference or browser language
+                const savedLang = localStorage.getItem('preferred_language') || navigator.language.substring(0, 2);
+                if (savedLang === 'sv') {
+                    languageSelect.value = 'sv';
+                    setLanguage('sv');
+                } else {
+                    languageSelect.value = 'en';
+                    setLanguage('en');
+                }
+            }
+        }
+        
+        // Setup notifications
+        function setupNotifications() {
+            window.showNotification = function(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(function() {
+                    notification.classList.add('fadeout');
+                    setTimeout(function() {
+                        if (notification.parentNode) {
+                            document.body.removeChild(notification);
+                        }
+                    }, 500);
+                }, 5000);
+            };
+        }
+        
+        // Function to set the UI language
+        function setLanguage(lang) {
+            // Store preference
+            localStorage.setItem('preferred_language', lang);
+            
+            // Update UI elements that need translation
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (typeof __ === 'function') {
+                    el.textContent = __(key, lang);
+                }
+            });
+            
+            // Special handling for placeholder attributes
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (typeof __ === 'function') {
+                    el.placeholder = __(key, lang);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

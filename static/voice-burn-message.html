@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engångsmeddelande via telefonrobot - Nödlarmsystem</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/ringbot/static/css/styles.css">
+    <link rel="stylesheet" href="/ringbot/static/css/header.css">
+    <script src="/ringbot/static/translations_sv.js"></script>
+    <script src="/ringbot/static/translations_en.js"></script>
+    <script src="/ringbot/static/translations.js"></script>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        textarea, input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+        }
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        button {
+            background-color: #3a66db;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2951c5;
+        }
+        button svg {
+            width: 18px;
+            height: 18px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .card-header {
+            margin-bottom: 16px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 16px;
+        }
+        .steps {
+            display: flex;
+            margin-bottom: 24px;
+            overflow-x: auto;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            background-color: #f5f7ff;
+            border: 1px solid #e0e7ff;
+            position: relative;
+        }
+        .step.active {
+            background-color: #e0e7ff;
+            border-color: #c7d1ff;
+            font-weight: 600;
+        }
+        .step:not(:last-child):after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            clip-path: polygon(0% 0%, 100% 50%, 0% 100%);
+            z-index: 1;
+        }
+        .contacts-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 12px;
+        }
+        .contact-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .contact-item:last-child {
+            border-bottom: none;
+        }
+        .success-message {
+            background-color: #e0f7e6;
+            color: #1e7d36;
+            padding: 16px;
+            border-radius: 6px;
+            margin-top: 24px;
+            display: none;
+        }
+        .error-message {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 16px;
+            border-radius: 6px;
+            margin-top: 24px;
+            display: none;
+        }
+        .options-toggle {
+            font-size: 14px;
+            color: #4f46e5;
+            text-decoration: underline;
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+        .advanced-options {
+            display: none;
+            padding: 16px;
+            background-color: #f9fafb;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        .nav-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            font-weight: 500;
+            color: #666;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+        .tab-button.active {
+            color: #3a66db;
+            border-bottom-color: #3a66db;
+        }
+        .tab-button:hover {
+            background-color: #f5f7ff;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1 data-i18n="voiceBurnMsg">Engångsmeddelande via telefonrobot</h1>
+            <div class="operator-panel">
+                <div class="language-selector">
+                    <select id="language-select">
+                        <option value="sv">Svenska</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="nav-tabs">
+        <a href="/" class="tab-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>Startsida</span>
+        </a>
+        <a href="/ringbot/static/dashboard.html" class="tab-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Dashboard</span>
+        </a>
+        <a href="/ringbot/static/group-messenger.html" class="tab-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Gruppmeddelanden</span>
+        </a>
+        <button class="tab-button active">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span>Engångsmeddelande</span>
+        </button>
+    </div>
+
+    <div class="container">
+        <div class="steps">
+            <div class="step active" id="step1">1. Skapa meddelande</div>
+            <div class="step" id="step2">2. Välj mottagare</div>
+            <div class="step" id="step3">3. Konfigurera samtal</div>
+            <div class="step" id="step4">4. Bekräfta & skicka</div>
+        </div>
+
+        <!-- Step 1: Create Message -->
+        <div class="card" id="messageCard">
+            <div class="card-header">
+                <h2>Skapa engångsmeddelande</h2>
+                <p>Detta meddelande kommer att sparas på servern och kan läsas en gång via en säker länk.</p>
+            </div>
+            <div class="form-group">
+                <label for="burnMessage">Meddelande (kommer visas via länk):</label>
+                <textarea id="burnMessage" placeholder="Skriv ditt konfidentiella meddelande här..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="expiration">Giltighetstid:</label>
+                <select id="expiration">
+                    <option value="1">1 timme</option>
+                    <option value="4">4 timmar</option>
+                    <option value="12">12 timmar</option>
+                    <option value="24" selected>24 timmar</option>
+                    <option value="48">48 timmar</option>
+                    <option value="72">72 timmar</option>
+                </select>
+            </div>
+            <button id="nextToRecipients">
+                <span>Fortsätt till mottagare</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Step 2: Select Recipients -->
+        <div class="card" id="recipientsCard" style="display:none;">
+            <div class="card-header">
+                <h2>Välj mottagare</h2>
+                <p>Välj kontakter eller en grupp som ska få telefonsamtal med instruktioner.</p>
+            </div>
+            <div class="form-group">
+                <div>
+                    <input type="radio" id="contactsRadio" name="recipientType" value="contacts" checked>
+                    <label for="contactsRadio" style="display: inline;">Välj kontakter</label>
+                    
+                    <input type="radio" id="groupRadio" name="recipientType" value="group" style="margin-left: 15px;">
+                    <label for="groupRadio" style="display: inline;">Välj grupp</label>
+                </div>
+                
+                <div id="contactsSelector" style="margin-top: 16px;">
+                    <div class="contacts-container" id="contactsList">
+                        <p>Laddar kontakter...</p>
+                    </div>
+                </div>
+                
+                <div id="groupSelector" style="margin-top: 16px; display: none;">
+                    <select id="groupDropdown">
+                        <option value="">Laddar grupper...</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button id="backToMessage" class="secondary-button" style="background-color: #f3f4f6; color: #374151;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5"></path>
+                        <path d="M12 19l-7-7 7-7"></path>
+                    </svg>
+                    <span>Tillbaka</span>
+                </button>
+                <button id="nextToCallSettings">
+                    <span>Fortsätt till samtalsinställningar</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="m12 5 7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Call Settings -->
+        <div class="card" id="callSettingsCard" style="display:none;">
+            <div class="card-header">
+                <h2>Samtalsinställningar</h2>
+                <p>Konfigurera vad telefonrobotet ska säga och hur användaren ska göra för att komma åt meddelandet.</p>
+            </div>
+            <div class="form-group">
+                <label for="introMessage">Introduktionsmeddelande (sägs av telefonrobot):</label>
+                <textarea id="introMessage" placeholder="T.ex. 'Hej, du har ett konfidentiellt meddelande som kräver din uppmärksamhet. Följ instruktionerna för att läsa det...'">Hej, du har ett konfidentiellt meddelande som endast kan läsas en gång. För att visa meddelandet, öppna följande länk på din telefon eller dator efter detta samtal. Länken skickas även som SMS till dig.</textarea>
+            </div>
+            <div class="form-group">
+                <label for="customLinkText">Anpassad länktext (visas i SMS):</label>
+                <input type="text" id="customLinkText" placeholder="T.ex. 'Klicka här för att visa konfidentiellt meddelande'" value="Klicka här för att visa ett konfidentiellt meddelande (kan endast läsas en gång)">
+            </div>
+            <button id="showAdvancedOptions" class="options-toggle">Visa avancerade inställningar</button>
+            <div id="advancedOptions" class="advanced-options">
+                <div class="form-group">
+                    <label for="dtmfDigit">DTMF-knapp för bekräftelse:</label>
+                    <select id="dtmfDigit">
+                        <option value="1" selected>1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="dtmfMessage">DTMF-bekräftelsemeddelande:</label>
+                    <textarea id="dtmfMessage" placeholder="T.ex. 'Tack, vi skickar nu länken via SMS.'">Tack för din bekräftelse. Vi skickar nu länken till meddelandet via SMS. Länken kan endast användas en gång.</textarea>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button id="backToRecipients" class="secondary-button" style="background-color: #f3f4f6; color: #374151;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5"></path>
+                        <path d="M12 19l-7-7 7-7"></path>
+                    </svg>
+                    <span>Tillbaka</span>
+                </button>
+                <button id="nextToConfirm">
+                    <span>Fortsätt till bekräftelse</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="m12 5 7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 4: Confirm & Send -->
+        <div class="card" id="confirmCard" style="display:none;">
+            <div class="card-header">
+                <h2>Bekräfta & skicka</h2>
+                <p>Granska inställningarna och starta telefonsamtalen.</p>
+            </div>
+            <div class="form-group">
+                <h3>Sammanfattning</h3>
+                <div style="background-color: #f9fafb; padding: 16px; border-radius: 8px;">
+                    <p><strong>Engångsmeddelande:</strong> <span id="summaryMessage"></span></p>
+                    <p><strong>Giltighetstid:</strong> <span id="summaryExpiration"></span></p>
+                    <p><strong>Mottagare:</strong> <span id="summaryRecipients"></span></p>
+                    <p><strong>Telefonrobot säger:</strong> <span id="summaryIntro"></span></p>
+                    <p><strong>SMS länktext:</strong> <span id="summaryLinkText"></span></p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button id="backToCallSettings" class="secondary-button" style="background-color: #f3f4f6; color: #374151;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5"></path>
+                        <path d="M12 19l-7-7 7-7"></path>
+                    </svg>
+                    <span>Tillbaka</span>
+                </button>
+                <button id="sendCallsBtn" style="background-color: #16a34a;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 2L11 13"></path>
+                        <path d="M22 2L15 22 11 13 2 9 22 2z"></path>
+                    </svg>
+                    <span>Starta samtal & skicka meddelande</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="successMessage" class="success-message">
+            <h3>Samtalen har initierats!</h3>
+            <p>Engångsmeddelandet har skapats och samtalen har startats. När kontakterna svarar på samtalen och bekräftar, kommer de att få ett SMS med länken till meddelandet.</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Apply translations if available
+            if (typeof applyBasicTranslations === 'function') {
+                applyBasicTranslations();
+            }
+
+            // Set up language selector
+            const languageSelect = document.getElementById('language-select');
+            if (languageSelect) {
+                languageSelect.addEventListener('change', function(e) {
+                    if (typeof setLanguage === 'function') {
+                        setLanguage(e.target.value);
+                    }
+                });
+                
+                // Set initial language from local storage or browser
+                const savedLang = localStorage.getItem('preferred_language') || navigator.language.substring(0, 2);
+                if (savedLang === 'sv') {
+                    languageSelect.value = 'sv';
+                    if (typeof setLanguage === 'function') setLanguage('sv');
+                } else {
+                    languageSelect.value = 'en';
+                    if (typeof setLanguage === 'function') setLanguage('en');
+                }
+            }
+
+            // Step handling
+            const steps = ['messageCard', 'recipientsCard', 'callSettingsCard', 'confirmCard'];
+            const stepIndicators = ['step1', 'step2', 'step3', 'step4'];
+            
+            function showStep(stepIndex) {
+                // Hide all cards
+                steps.forEach(step => document.getElementById(step).style.display = 'none');
+                stepIndicators.forEach(step => document.getElementById(step).classList.remove('active'));
+                
+                // Show the selected card
+                document.getElementById(steps[stepIndex]).style.display = 'block';
+                document.getElementById(stepIndicators[stepIndex]).classList.add('active');
+            }
+
+            // Navigation buttons
+            document.getElementById('nextToRecipients').addEventListener('click', function() {
+                // Validate message
+                const message = document.getElementById('burnMessage').value.trim();
+                if (!message) {
+                    document.getElementById('errorMessage').textContent = 'Ange ett meddelande först.';
+                    document.getElementById('errorMessage').style.display = 'block';
+                    return;
+                }
+                document.getElementById('errorMessage').style.display = 'none';
+                
+                // Make sure contacts and groups are loaded when going to recipients step
+                loadContacts();
+                loadGroups();
+                
+                showStep(1);
+            });
+
+            document.getElementById('backToMessage').addEventListener('click', function() {
+                showStep(0);
+            });
+
+            document.getElementById('nextToCallSettings').addEventListener('click', function() {
+                // Validate recipients
+                let hasRecipients = false;
+                if (document.getElementById('contactsRadio').checked) {
+                    const checkedContacts = document.querySelectorAll('#contactsList input[type="checkbox"]:checked');
+                    hasRecipients = checkedContacts.length > 0;
+                } else {
+                    hasRecipients = document.getElementById('groupDropdown').value !== '';
+                }
+                
+                if (!hasRecipients) {
+                    document.getElementById('errorMessage').textContent = 'Välj minst en mottagare.';
+                    document.getElementById('errorMessage').style.display = 'block';
+                    return;
+                }
+                document.getElementById('errorMessage').style.display = 'none';
+                showStep(2);
+            });
+
+            document.getElementById('backToRecipients').addEventListener('click', function() {
+                showStep(1);
+            });
+
+            document.getElementById('nextToConfirm').addEventListener('click', function() {
+                // Validate call settings
+                const introMessage = document.getElementById('introMessage').value.trim();
+                if (!introMessage) {
+                    document.getElementById('errorMessage').textContent = 'Ange ett introduktionsmeddelande.';
+                    document.getElementById('errorMessage').style.display = 'block';
+                    return;
+                }
+                document.getElementById('errorMessage').style.display = 'none';
+                
+                // Update summary
+                updateSummary();
+                showStep(3);
+            });
+
+            document.getElementById('backToCallSettings').addEventListener('click', function() {
+                showStep(2);
+            });
+
+            // Toggle advanced options
+            document.getElementById('showAdvancedOptions').addEventListener('click', function() {
+                const advancedOptions = document.getElementById('advancedOptions');
+                if (advancedOptions.style.display === 'none' || !advancedOptions.style.display) {
+                    advancedOptions.style.display = 'block';
+                    this.textContent = 'Dölj avancerade inställningar';
+                } else {
+                    advancedOptions.style.display = 'none';
+                    this.textContent = 'Visa avancerade inställningar';
+                }
+            });
+
+            // Toggle between contacts and group selection
+            const contactsRadio = document.getElementById('contactsRadio');
+            const groupRadio = document.getElementById('groupRadio');
+            const contactsSelector = document.getElementById('contactsSelector');
+            const groupSelector = document.getElementById('groupSelector');
+            
+            contactsRadio.addEventListener('change', function() {
+                contactsSelector.style.display = 'block';
+                groupSelector.style.display = 'none';
+            });
+            
+            groupRadio.addEventListener('change', function() {
+                contactsSelector.style.display = 'none';
+                groupSelector.style.display = 'block';
+            });
+
+            // Send button handler
+            document.getElementById('sendCallsBtn').addEventListener('click', sendBurnMessageCall);
+
+            // Function to update summary
+            function updateSummary() {
+                // Get message and expiration
+                const message = document.getElementById('burnMessage').value.trim();
+                const expiration = document.getElementById('expiration').value;
+                document.getElementById('summaryMessage').textContent = message.length > 50 ? message.substring(0, 50) + '...' : message;
+                document.getElementById('summaryExpiration').textContent = expiration + ' timmar';
+                
+                // Get recipients
+                let recipients = '';
+                if (document.getElementById('contactsRadio').checked) {
+                    const checkedContacts = document.querySelectorAll('#contactsList input[type="checkbox"]:checked');
+                    const names = Array.from(checkedContacts).map(cb => cb.nextElementSibling.textContent);
+                    recipients = names.length > 3 ? 
+                        names.slice(0, 3).join(', ') + ` och ${names.length - 3} till` : 
+                        names.join(', ');
+                } else {
+                    const groupSelect = document.getElementById('groupDropdown');
+                    if (groupSelect.selectedIndex !== -1) {
+                        recipients = 'Grupp: ' + groupSelect.options[groupSelect.selectedIndex].text;
+                    }
+                }
+                document.getElementById('summaryRecipients').textContent = recipients;
+                
+                // Get call settings
+                const introMessage = document.getElementById('introMessage').value.trim();
+                const linkText = document.getElementById('customLinkText').value.trim();
+                document.getElementById('summaryIntro').textContent = introMessage.length > 50 ? introMessage.substring(0, 50) + '...' : introMessage;
+                document.getElementById('summaryLinkText').textContent = linkText;
+            }
+
+            // Load contacts
+            async function loadContacts() {
+                try {
+                    const contactsList = document.getElementById('contactsList');
+                    contactsList.innerHTML = '<p>Laddar kontakter...</p>';
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                    
+                    try {
+                        const baseUrl = window.location.origin;
+                        const response = await fetch(`${baseUrl}/api/contacts`, {
+                            signal: controller.signal
+                        });
+                        
+                        clearTimeout(timeoutId);
+                        
+                        if (!response.ok) {
+                            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                        }
+                        
+                        const contacts = await response.json();
+                        
+                        if (!Array.isArray(contacts) || contacts.length === 0) {
+                            contactsList.innerHTML = '<p>Inga kontakter hittades</p>';
+                            return;
+                        }
+                        
+                        contactsList.innerHTML = '';
+                        
+                        contacts.forEach(contact => {
+                            const div = document.createElement('div');
+                            div.classList.add('contact-item');
+                            
+                            const checkbox = document.createElement('input');
+                            checkbox.type = 'checkbox';
+                            checkbox.id = `contact-${contact.id}`;
+                            checkbox.dataset.contactId = contact.id;
+                            
+                            const label = document.createElement('label');
+                            label.htmlFor = `contact-${contact.id}`;
+                            label.textContent = contact.name;
+                            label.style.display = 'inline';
+                            label.style.fontWeight = 'normal';
+                            
+                            div.appendChild(checkbox);
+                            div.appendChild(label);
+                            contactsList.appendChild(div);
+                        });
+                    } catch (fetchError) {
+                        clearTimeout(timeoutId);
+                        throw fetchError;
+                    }
+                } catch (error) {
+                    let errorMessage = 'Fel vid laddning av kontakter';
+                    if (error.name === 'AbortError') {
+                        errorMessage = 'Tidsgräns överskreds vid laddning av kontakter';
+                    }
+                    document.getElementById('contactsList').innerHTML = `<p>${errorMessage}</p><p>Kontrollera att servern körs och försök igen.</p>`;
+                    console.error('Error loading contacts:', error);
+                }
+            }
+
+            // Load groups
+            async function loadGroups() {
+                try {
+                    const groupDropdown = document.getElementById('groupDropdown');
+                    groupDropdown.innerHTML = '<option value="">Laddar grupper...</option>';
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                    
+                    try {
+                        const baseUrl = window.location.origin;
+                        const response = await fetch(`${baseUrl}/api/groups`, {
+                            signal: controller.signal
+                        });
+                        
+                        clearTimeout(timeoutId);
+                        
+                        if (!response.ok) {
+                            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                        }
+                        
+                        const groups = await response.json();
+                        
+                        if (!Array.isArray(groups) || groups.length === 0) {
+                            groupDropdown.innerHTML = '<option value="">Inga grupper hittades</option>';
+                            return;
+                        }
+                        
+                        groupDropdown.innerHTML = '<option value="">Välj en grupp</option>';
+                        
+                        groups.forEach(group => {
+                            const option = document.createElement('option');
+                            option.value = group.id;
+                            option.textContent = group.name;
+                            groupDropdown.appendChild(option);
+                        });
+                    } catch (fetchError) {
+                        clearTimeout(timeoutId);
+                        throw fetchError;
+                    }
+                } catch (error) {
+                    let errorMessage = 'Fel vid laddning av grupper';
+                    if (error.name === 'AbortError') {
+                        errorMessage = 'Tidsgräns överskreds vid laddning av grupper';
+                    }
+                    document.getElementById('groupDropdown').innerHTML = `<option value="">${errorMessage}</option>`;
+                    console.error('Error loading groups:', error);
+                }
+            }
+
+            // Send burn message call
+            async function sendBurnMessageCall() {
+                document.getElementById('successMessage').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'none';
+                
+                try {
+                    // Get message and settings
+                    const burnContent = document.getElementById('burnMessage').value.trim();
+                    const expiresInHours = parseInt(document.getElementById('expiration').value, 10);
+                    const introMessage = document.getElementById('introMessage').value.trim();
+                    const customLinkText = document.getElementById('customLinkText').value.trim();
+                    const dtmfDigit = document.getElementById('dtmfDigit').value;
+                    const dtmfMessage = document.getElementById('dtmfMessage').value.trim();
+                    
+                    // Get recipients
+                    let recipients = [], groupId = null;
+                    
+                    if (document.getElementById('contactsRadio').checked) {
+                        // Get selected contacts
+                        const contactCheckboxes = document.querySelectorAll('#contactsList input[type="checkbox"]:checked');
+                        if (contactCheckboxes.length === 0) {
+                            throw new Error('Välj minst en kontakt');
+                        }
+                        
+                        recipients = Array.from(contactCheckboxes).map(cb => cb.dataset.contactId);
+                    } else {
+                        // Get selected group
+                        groupId = document.getElementById('groupDropdown').value;
+                        if (!groupId) {
+                            throw new Error('Välj en grupp');
+                        }
+                    }
+
+                    // Prepare request payload for creating burn message and call
+                    const payload = {
+                        burn_content: burnContent,
+                        expires_in_hours: expiresInHours,
+                        intro_message: introMessage,
+                        custom_link_text: customLinkText || null,
+                        dtmf_digit: dtmfDigit,
+                        dtmf_message: dtmfMessage,
+                        recipients: recipients,
+                        group_id: groupId,
+                    };
+
+                    // Send request to create burn message and start calls
+                    const baseUrl = window.location.origin;
+                    // Include base_url in payload to ensure correct URL generation for the burn message link
+                    payload.base_url = "http://titanic.urem.org:3003";
+                    const response = await fetch(`${baseUrl}/api/burn-message-call`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.detail || 'Misslyckades med att starta samtal');
+                    }
+
+                    const result = await response.json();
+                    
+                    // Show success message
+                    document.getElementById('successMessage').style.display = 'block';
+                    
+                    // Reset form
+                    document.getElementById('burnMessage').value = '';
+                    document.getElementById('customLinkText').value = 'Klicka här för att visa ett konfidentiellt meddelande (kan endast läsas en gång)';
+                    document.querySelectorAll('#contactsList input[type="checkbox"]').forEach(cb => cb.checked = false);
+                    document.getElementById('groupDropdown').value = '';
+                    
+                    // Return to first step
+                    showStep(0);
+                    
+                } catch (error) {
+                    document.getElementById('errorMessage').textContent = error.message;
+                    document.getElementById('errorMessage').style.display = 'block';
+                    console.error('Error sending burn message call:', error);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

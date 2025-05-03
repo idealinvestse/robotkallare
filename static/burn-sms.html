@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skicka engångsmeddelande SMS - Nödlarmsystem</title>
+    <link rel="stylesheet" href="/ringbot/static/css/styles.css">
+    <script src="/ringbot/static/translations_sv.js"></script>
+    <script src="/ringbot/static/translations_en.js"></script>
+    <script src="/ringbot/static/translations.js"></script>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        textarea, input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        textarea {
+            min-height: 100px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        .contacts-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .contact-item {
+            margin-bottom: 5px;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .success {
+            color: green;
+            margin-top: 10px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            margin-right: 5px;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+        }
+        .tab.active {
+            background-color: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 data-i18n="burnSms">Engångs-SMS</h1>
+        <p data-i18n="burnSmsDesc">Skicka ett SMS med en länk till ett säkert meddelande som bara kan visas en gång.</p>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="sameContent" data-i18n="sameContent">Samma innehåll</div>
+            <div class="tab" data-tab="separateContent" data-i18n="separateContent">Separat innehåll</div>
+        </div>
+
+        <div id="sameContent" class="tab-content active">
+            <div class="form-group">
+                <label for="message">Message Content:</label>
+                <textarea id="message" placeholder="This content will be both sent via SMS and displayed when the link is opened."></textarea>
+            </div>
+        </div>
+
+        <div id="separateContent" class="tab-content">
+            <div class="form-group">
+                <label for="smsMessage">SMS Message Content:</label>
+                <textarea id="smsMessage" placeholder="This will be sent in the SMS..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="burnMessage">Burn Message Content:</label>
+                <textarea id="burnMessage" placeholder="This will be displayed when the link is opened..."></textarea>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="linkText">Custom Link Text (Optional):</label>
+            <input type="text" id="linkText" placeholder="e.g., 'Click here to view confidential message'">
+        </div>
+
+        <div class="form-group">
+            <label for="expiration">Expiration Time:</label>
+            <select id="expiration">
+                <option value="1">1 hour</option>
+                <option value="4">4 hours</option>
+                <option value="12">12 hours</option>
+                <option value="24" selected>24 hours</option>
+                <option value="48">48 hours</option>
+                <option value="72">72 hours</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Recipients:</label>
+            <div>
+                <input type="radio" id="contactsRadio" name="recipientType" value="contacts" checked>
+                <label for="contactsRadio" style="display: inline;">Select Contacts</label>
+                
+                <input type="radio" id="groupRadio" name="recipientType" value="group" style="margin-left: 15px;">
+                <label for="groupRadio" style="display: inline;">Select Group</label>
+            </div>
+            
+            <div id="contactsSelector" style="margin-top: 10px;">
+                <div class="contacts-container" id="contactsList">
+                    <p>Loading contacts...</p>
+                </div>
+            </div>
+            
+            <div id="groupSelector" style="margin-top: 10px; display: none;">
+                <select id="groupDropdown">
+                    <option value="">Loading groups...</option>
+                </select>
+            </div>
+        </div>
+
+        <button id="sendBtn">Send Burn Message SMS</button>
+
+        <div id="success" class="success"></div>
+        <div id="error" class="error"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Applicera översättningar om de inte redan har applicerats
+            if (typeof applyBasicTranslations === 'function') {
+                applyBasicTranslations();
+            }
+            // Tab functionality
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs and content
+                    tabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    this.classList.add('active');
+                    document.getElementById(this.dataset.tab).classList.add('active');
+                });
+            });
+
+            // Toggle between contacts and group selection
+            const contactsRadio = document.getElementById('contactsRadio');
+            const groupRadio = document.getElementById('groupRadio');
+            const contactsSelector = document.getElementById('contactsSelector');
+            const groupSelector = document.getElementById('groupSelector');
+            
+            contactsRadio.addEventListener('change', function() {
+                contactsSelector.style.display = 'block';
+                groupSelector.style.display = 'none';
+            });
+            
+            groupRadio.addEventListener('change', function() {
+                contactsSelector.style.display = 'none';
+                groupSelector.style.display = 'block';
+            });
+
+            // Load contacts and groups
+            loadContacts();
+            loadGroups();
+
+            // Send button handler
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.addEventListener('click', sendBurnSms);
+        });
+
+        async function loadContacts() {
+            try {
+                const response = await fetch('/api/contacts');
+                const contacts = await response.json();
+                
+                const contactsList = document.getElementById('contactsList');
+                contactsList.innerHTML = '';
+                
+                contacts.forEach(contact => {
+                    const div = document.createElement('div');
+                    div.classList.add('contact-item');
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `contact-${contact.id}`;
+                    checkbox.dataset.contactId = contact.id;
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `contact-${contact.id}`;
+                    label.textContent = contact.name;
+                    label.style.display = 'inline';
+                    label.style.fontWeight = 'normal';
+                    
+                    div.appendChild(checkbox);
+                    div.appendChild(label);
+                    contactsList.appendChild(div);
+                });
+            } catch (error) {
+                document.getElementById('contactsList').innerHTML = '<p>Error loading contacts</p>';
+                console.error('Error loading contacts:', error);
+            }
+        }
+
+        async function loadGroups() {
+            try {
+                const response = await fetch('/api/groups');
+                const groups = await response.json();
+                
+                const groupDropdown = document.getElementById('groupDropdown');
+                groupDropdown.innerHTML = '<option value="">Select a group</option>';
+                
+                groups.forEach(group => {
+                    const option = document.createElement('option');
+                    option.value = group.id;
+                    option.textContent = group.name;
+                    groupDropdown.appendChild(option);
+                });
+            } catch (error) {
+                document.getElementById('groupDropdown').innerHTML = '<option value="">Error loading groups</option>';
+                console.error('Error loading groups:', error);
+            }
+        }
+
+        async function sendBurnSms() {
+            // Clear previous messages
+            document.getElementById('success').textContent = '';
+            document.getElementById('error').textContent = '';
+            
+            try {
+                // Determine which tab is active
+                const isSameContent = document.querySelector('.tab[data-tab="sameContent"]').classList.contains('active');
+                
+                // Get content based on active tab
+                let messageContent, burnContent;
+                if (isSameContent) {
+                    messageContent = document.getElementById('message').value.trim();
+                    burnContent = messageContent;
+                } else {
+                    messageContent = document.getElementById('smsMessage').value.trim();
+                    burnContent = document.getElementById('burnMessage').value.trim();
+                }
+
+                // Validate content
+                if (!messageContent) {
+                    throw new Error('Please enter SMS message content');
+                }
+                
+                if (!burnContent) {
+                    throw new Error('Please enter burn message content');
+                }
+
+                // Get recipients
+                let recipients = [], groupId = null;
+                
+                if (document.getElementById('contactsRadio').checked) {
+                    // Get selected contacts
+                    const contactCheckboxes = document.querySelectorAll('#contactsList input[type="checkbox"]:checked');
+                    if (contactCheckboxes.length === 0) {
+                        throw new Error('Please select at least one contact');
+                    }
+                    
+                    recipients = Array.from(contactCheckboxes).map(cb => cb.dataset.contactId);
+                } else {
+                    // Get selected group
+                    groupId = document.getElementById('groupDropdown').value;
+                    if (!groupId) {
+                        throw new Error('Please select a group');
+                    }
+                }
+
+                // Get other parameters
+                const linkText = document.getElementById('linkText').value.trim();
+                const expiresInHours = parseInt(document.getElementById('expiration').value, 10);
+
+                // Prepare request payload
+                const payload = isSameContent ? 
+                    {
+                        recipients,
+                        group_id: groupId,
+                        message_content: messageContent,
+                        custom_link_text: linkText || null,
+                        expires_in_hours: expiresInHours
+                    } :
+                    {
+                        recipients,
+                        group_id: groupId,
+                        sms_content: messageContent,
+                        burn_content: burnContent,
+                        custom_link_text: linkText || null,
+                        expires_in_hours: expiresInHours
+                    };
+
+                // Send request
+                const endpoint = isSameContent ? '/api/burn-sms' : '/api/burn-sms/separate-content';
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to send burn message SMS');
+                }
+
+                const result = await response.json();
+                document.getElementById('success').textContent = result.detail || 'Burn message SMS sent successfully!';
+                
+                // Reset form
+                if (isSameContent) {
+                    document.getElementById('message').value = '';
+                } else {
+                    document.getElementById('smsMessage').value = '';
+                    document.getElementById('burnMessage').value = '';
+                }
+                
+                document.getElementById('linkText').value = '';
+                document.querySelectorAll('#contactsList input[type="checkbox"]').forEach(cb => cb.checked = false);
+                document.getElementById('groupDropdown').value = '';
+                
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+                console.error('Error sending burn SMS:', error);
+            }
+        }
+    </script>
+</body>
+</html>

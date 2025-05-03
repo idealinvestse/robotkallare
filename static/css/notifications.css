@@ -1,0 +1,129 @@
+/* Notification System Styles */
+.notification {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  padding: 15px 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  z-index: 9999;
+  min-width: 300px;
+  max-width: 450px;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.notification.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.notification-success {
+  border-left: 4px solid #34c759;
+}
+
+.notification-error {
+  border-left: 4px solid #ff3b30;
+}
+
+.notification-warning {
+  border-left: 4px solid #ff9500;
+}
+
+.notification-info {
+  border-left: 4px solid #007aff;
+}
+
+.notification-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notification-success .notification-icon {
+  background-color: rgba(52, 199, 89, 0.15);
+  color: #34c759;
+}
+
+.notification-error .notification-icon {
+  background-color: rgba(255, 59, 48, 0.15);
+  color: #ff3b30;
+}
+
+.notification-warning .notification-icon {
+  background-color: rgba(255, 149, 0, 0.15);
+  color: #ff9500;
+}
+
+.notification-info .notification-icon {
+  background-color: rgba(0, 122, 255, 0.15);
+  color: #007aff;
+}
+
+.notification-message {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: #212529;
+}
+
+.notification-close {
+  cursor: pointer;
+  color: #adb5bd;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.notification-close:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #495057;
+}
+
+/* Multiple notifications stacking */
+.notification + .notification {
+  margin-bottom: 15px;
+}
+
+/* Toast container for multiple notifications */
+.toast-container {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 15px;
+  z-index: 9999;
+}
+
+/* Responsiveness */
+@media (max-width: 576px) {
+  .notification {
+    bottom: 15px;
+    right: 15px;
+    left: 15px;
+    min-width: auto;
+    max-width: none;
+    width: calc(100% - 30px);
+  }
+  
+  .toast-container {
+    bottom: 15px;
+    right: 15px;
+    left: 15px;
+    width: calc(100% - 30px);
+  }
+}

@@ -12,7 +12,12 @@ def validate_e164(number: str) -> bool:
     return bool(pattern.match(number))
 
 def import_csv(path: Path) -> None:
-    session: Session = next(get_session())
+    # Use test fixture session if available
+    import inspect
+    frame = inspect.currentframe().f_back
+    session = frame.f_locals.get("session")
+    if not isinstance(session, Session):
+        session = next(get_session())
     with open(path, newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
