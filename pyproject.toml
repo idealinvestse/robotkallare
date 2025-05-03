@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gdial"
+version = "0.1.0"
+description = "GDial Backend Application"
+requires-python = ">=3.10" # Anpassa om din Python-version är annorlunda
+# Dependencies are managed by requirements.in/requirements.txt
+# Add classifiers, authors, readme, etc. as needed later
+
+[tool.setuptools.packages.find]
+where = ["."]  # Hitta paket i rotkatalogen
+include = ["app*"]  # Inkludera app-paketet och dess subpaket
+exclude = ["tests*"] # Exkludera tester
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto" # Automatically handle asyncio setup
+asyncio_default_fixture_loop_scope = "function" # Recommended explicit scope

@@ -1,0 +1,18 @@
+fastapi
+uvicorn[standard]
+pydantic-settings
+sqlmodel
+twilio
+httpx
+python-multipart
+apscheduler
+# TTS requirements
+torch>=1.12.0
+transformers>=4.33.0
+scipy>=1.9.0
+pydub>=0.25.1
+pika>=1.3.0
+prometheus_client>=0.15.0
+psutil>=5.9.0
+numpy>=1.22.0
+sympy>=1.11.0
