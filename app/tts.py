@@ -1,6 +1,6 @@
 """Text-to-Speech module for GDial.
 
-Provides functions to generate audio from text using Google's TTS service for Swedish.
+Provides functions to generate audio from text using multiple TTS providers.
 """
 import os
 import uuid
@@ -8,6 +8,8 @@ import logging
 from pathlib import Path
 from gtts import gTTS
 from pydub import AudioSegment
+from app.tts.coqui import generate_audio_coqui
+from app.tts.openai import generate_audio_openai
 
 # Setup logging
 logger = logging.getLogger("tts")
@@ -23,12 +25,13 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 TTS_LANGUAGE = 'sv'  # Swedish language code
 TTS_SLOW = False     # Normal speech rate
 
-def text_to_audio(text, output_format="mp3", file_id=None, seed=None, voice_pitch=0, voice_speed=1.0):
+def text_to_audio(text, voice="google", output_format="mp3", file_id=None, seed=None, voice_pitch=0, voice_speed=1.0):
     """
-    Convert text to audio using Google's TTS service for Swedish.
+    Convert text to audio using specified TTS provider (google, coqui, openai).
     
     Parameters:
     - text: Text to convert to speech
+    - voice: TTS provider to use (google, coqui, openai)
     - output_format: Output format (mp3 or wav)
     - file_id: Optional UUID for the output file (generated if None)
     - seed: Not used with Google TTS but kept for API compatibility
@@ -38,7 +41,7 @@ def text_to_audio(text, output_format="mp3", file_id=None, seed=None, voice_pitc
     Returns:
     - Path to generated audio file
     """
-    logger.info(f"Converting text to speech: {text[:50]}...")
+    logger.info(f"Converting text to speech [provider={voice}]: {text[:50]}...")
     
     try:
         # Generate a file ID if not provided
@@ -69,6 +72,12 @@ def text_to_audio(text, output_format="mp3", file_id=None, seed=None, voice_pitc
                 logger.debug(f"Removed existing WAV file: {wav_path}")
         
         try:
+            # Dispatch to other providers
+            if voice.lower() == "coqui":
+                return generate_audio_coqui(text, file_id=file_id, voice_pitch=voice_pitch, voice_speed=voice_speed)
+            if voice.lower() == "openai":
+                return generate_audio_openai(text, output_format=output_format, file_id=file_id, voice=None)
+            
             # Determine if we should use slow speech rate
             use_slow = voice_speed < 0.8 if voice_speed else TTS_SLOW
             

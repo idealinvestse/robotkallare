@@ -13,10 +13,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 from app.database import engine
 from app.models import Message, CustomMessageLog
 # Import directly from the module to avoid circular imports
-from app.tts import text_to_audio, get_audio_url  # tts.py module, not tts/ package
+from app.tts import text_to_audio
 from app.config import get_settings
-from app.queue.rabbitmq import get_rabbitmq_connection
-from sqlmodel import Session, select
+from app.tts_queue import set_tts_job_status
 
 # Setup logging
 logging.basicConfig(
@@ -46,55 +45,32 @@ def setup_rabbitmq():
     return connection, channel
 
 def process_tts_job(job_data: Dict[str, Any]):
-    """Process a TTS job"""
+    """Process a TTS job (scalable, parallel, async-safe)."""
     try:
-        message_id = job_data.get('message_id')
-        custom_message_id = job_data.get('custom_message_id')
-        text_content = job_data.get('text_content')
-        base_url = job_data.get('base_url') or settings.PUBLIC_URL or f"http://{settings.API_HOST}:{settings.API_PORT}"
-        
-        if not (message_id or custom_message_id or text_content):
-            logger.error("TTS job missing required fields")
+        job_id = job_data.get('job_id')
+        text = job_data.get('text')
+        voice = job_data.get('voice', 'google')
+        output_format = job_data.get('output_format', 'mp3')
+
+        if not job_id or not text:
+            logger.error("TTS job missing required fields: job_id or text")
             return False
-            
-        # Determine file ID and text content
-        file_id = message_id or custom_message_id or str(uuid.uuid4())
+
+        set_tts_job_status(job_id, "processing")
         
-        if not text_content:
-            # Load message content from database
-            with Session(engine) as session:
-                if message_id:
-                    message = session.exec(
-                        select(Message).where(Message.id == uuid.UUID(message_id))
-                    ).first()
-                    if message:
-                        text_content = message.content
-                elif custom_message_id:
-                    custom_message = session.exec(
-                        select(CustomMessageLog).where(CustomMessageLog.id == uuid.UUID(custom_message_id))
-                    ).first()
-                    if custom_message:
-                        text_content = custom_message.message_content
-                        
-        if not text_content:
-            logger.error(f"No text content found for TTS job. Message ID: {message_id}, Custom message ID: {custom_message_id}")
-            return False
-            
-        # Generate audio
-        audio_path = text_to_audio(text_content, file_id=file_id)
-        
+        # Generate audio (sync call, but worker can be run in parallel processes)
+        audio_path = text_to_audio(text, output_format=output_format, file_id=job_id)
         if not audio_path:
-            logger.error(f"Failed to generate audio for text: {text_content[:50]}...")
+            logger.error(f"Failed to generate audio for job {job_id}")
+            set_tts_job_status(job_id, "failed")
             return False
-            
-        # Get audio URL
-        audio_url = get_audio_url(audio_path, base_url)
-        
-        logger.info(f"Generated audio at {audio_url}")
+        set_tts_job_status(job_id, "done", audio_path=audio_path)
+        logger.info(f"Generated audio for job {job_id} at {audio_path}")
         return True
-        
     except Exception as e:
         logger.error(f"Error processing TTS job: {str(e)}", exc_info=True)
+        if job_data.get('job_id'):
+            set_tts_job_status(job_data['job_id'], "failed")
         return False
 
 def callback_tts(ch, method, properties, body):
