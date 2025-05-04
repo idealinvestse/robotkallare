@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Installera system-dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Kopiera bara de filer som behövs
+COPY cli_call_tester.py /app/
+COPY requirements-cli.txt /app/
+
+# Installera Python dependencies
+RUN pip install --no-cache-dir -r requirements-cli.txt
+
+# Skapa en volume för att dela .env filen
+VOLUME /app/config
+
+# Entrypoint script för att läsa in .env från volume
+COPY docker-entrypoint.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["--help"]
