@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # Huvuddatabasen 
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_USER=${DB_USER:-gdial}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-gdialpassword}
+      - POSTGRES_DB=${DB_NAME:-gdial}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER:-gdial}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    networks:
+      - gdial-network
+    restart: unless-stopped
+
+  # API och Webbserver
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - INSTALL_DEV=${INSTALL_DEV:-false}
+    volumes:
+      - ./app:/app/app
+      - ./static:/app/static
+      - ./.env:/app/.env
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-gdial}:${DB_PASSWORD:-gdialpassword}@postgres:5432/${DB_NAME:-gdial}
+      - PUBLIC_URL=${PUBLIC_URL:-http://localhost:3003}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-3003}:3003"
+    networks:
+      - gdial-network
+    restart: unless-stopped
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3003", "--reload"]
+
+  # CLI-verktyg för testning av samtal
+  cli:
+    build:
+      context: .
+      dockerfile: Dockerfile.cli
+    volumes:
+      - ./config:/app/config
+    environment:
+      - SQLITE_DB=${SQLITE_DB:-sqlite:///./dialer.db}
+      - PUBLIC_URL=${PUBLIC_URL:-http://localhost:3003}
+    networks:
+      - gdial-network
+    depends_on:
+      - api
+    profiles:
+      - tools
+    entrypoint: ["/app/docker-entrypoint.sh"]
+    command: ["--help"]
+
+  # Frontend applikation (om den ska köras separat)
+  frontend:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend_new:/app
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    networks:
+      - gdial-network
+    depends_on:
+      - api
+    profiles:
+      - frontend
+    command: sh -c "npm install && npm run dev"
+
+  # Outbox Worker för asynkrona jobb
+  outbox-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./app:/app/app
+      - ./.env:/app/.env
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-gdial}:${DB_PASSWORD:-gdialpassword}@postgres:5432/${DB_NAME:-gdial}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - gdial-network
+    restart: unless-stopped
+    command: ["python", "-m", "app.outbox_worker"]
+    profiles:
+      - workers
+
+networks:
+  gdial-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
