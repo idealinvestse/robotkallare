@@ -1,6 +1,6 @@
-# GDial Docker Deployment
+# GDial Backend Docker Deployment
 
-Detta är den officiella Docker-lösningen för att köra GDial-systemet. Lösningen erbjuder en enkel och konsekvent installation oavsett miljö (utveckling, test eller produktion).
+Detta är den officiella Docker-lösningen för att köra GDial Backend. Lösningen erbjuder en enkel och konsekvent installation oavsett miljö (utveckling, test eller produktion).
 
 ## Snabbstart
 
@@ -31,54 +31,60 @@ Om du föredrar att konfigurera systemet manuellt:
    docker compose up -d
    ```
 
-## Tillgängliga komponenter
+## Tillgängliga backend-komponenter
 
-GDial består av flera komponenter som kan köras separat eller tillsammans:
+GDial Backend består av flera komponenter som kan köras separat eller tillsammans:
 
-- **postgres**: PostgreSQL-databas för lagring av data
-- **api**: Huvudapplikationen som hanterar API-anrop och webhooks
-- **outbox-worker**: Hanterar asynkrona uppgifter och utskickskö
-- **cli**: CLI-verktyg för testning av samtalsfunktionalitet
-- **frontend**: Frontend-applikation (om den ska köras separat)
+- **backend-db**: PostgreSQL-databas för lagring av backend-data
+- **backend-api**: Backend API-server som hanterar API-anrop och webhooks
+- **backend-worker**: Backend-worker som hanterar asynkrona uppgifter och utskickskö
+- **backend-cli**: Backend CLI-verktyg för testning av samtalsfunktionalitet
+- **frontend**: Frontend-applikation (om den ska köras separat, ansluter till backend-api)
 
-## Användning av CLI-verktyget
+## Användning av Backend CLI-verktyget
 
-CLI-verktyget för samtalstest kan köras med:
+Backend CLI-verktyget för samtalstest kan köras med:
 
 ```bash
-docker compose run --rm cli
+docker compose run --rm backend-cli
 ```
 
 För att ringa ett testsamtal:
 
 ```bash
-docker compose run --rm cli call --mode tts --phone +46XXXXXXXXX --message "Testmeddelande"
+docker compose run --rm backend-cli call --mode tts --phone +46XXXXXXXXX --message "Testmeddelande"
 ```
 
 För att testa AI-samtal:
 
 ```bash
-docker compose run --rm cli call --mode realtime_ai --phone +46XXXXXXXXX
+docker compose run --rm backend-cli call --mode realtime_ai --phone +46XXXXXXXXX
 ```
 
-## Hantera systemet
+## Hantera backend-systemet
 
-### Se loggar
+### Se backend-loggar
 
 ```bash
 docker compose logs -f
 ```
 
-### Stoppa systemet
+För att se loggar för en specifik backend-komponent:
+
+```bash
+docker compose logs -f backend-api
+```
+
+### Stoppa backend-systemet
 
 ```bash
 docker compose down
 ```
 
-### Starta om enskild tjänst
+### Starta om enskild backend-tjänst
 
 ```bash
-docker compose restart api
+docker compose restart backend-api
 ```
 
 ## Konfigurationsvariabler
@@ -103,24 +109,40 @@ De viktigaste konfigurationsvariablerna som kan ställas in i .env-filen:
 
 Se huvuddokumentationen för GDial för ytterligare information om tillgängliga funktioner och användning.
 
-## Felsökning
+## Felsökning av backend
 
-### Problem med databasanslutning
+### Problem med backend-databasanslutning
 
-Om API-tjänsten inte kan ansluta till databasen, kontrollera att PostgreSQL-containern är igång:
+Om backend-API inte kan ansluta till databasen, kontrollera att PostgreSQL-containern är igång:
 
 ```bash
-docker compose ps postgres
+docker compose ps backend-db
 ```
 
 Kontrollera också att databasuppgifterna i .env-filen är korrekta.
 
-### Problem med API-anslutning
+### Problem med backend-API-anslutning
 
-Om CLI-verktyget inte kan ansluta till API:t, kontrollera att API-tjänsten är igång:
+Om Backend CLI-verktyget inte kan ansluta till backend-API:t, kontrollera att backend-API-tjänsten är igång:
 
 ```bash
-docker compose ps api
+docker compose ps backend-api
 ```
 
 Kontrollera också att PUBLIC_URL i .env-filen är korrekt.
+
+### Kontrollera alla backend-tjänster
+
+För att se status för alla backend-tjänster:
+
+```bash
+docker compose ps
+```
+
+### Backend-containerloggar
+
+För att se detaljerade containerloggar för felsökning:
+
+```bash
+docker compose logs -f backend-api
+```

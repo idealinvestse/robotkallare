@@ -1,8 +1,9 @@
 version: '3.8'
 
+# GDial Backend tjänster
 services:
-  # Huvuddatabasen 
-  postgres:
+  # Backend-databasen
+  backend-db:
     image: postgres:14-alpine
     environment:
       - POSTGRES_USER=${DB_USER:-gdial}
@@ -21,8 +22,8 @@ services:
       - gdial-network
     restart: unless-stopped
 
-  # API och Webbserver
-  api:
+  # Backend API-server
+  backend-api:
     build:
       context: .
       dockerfile: Dockerfile
@@ -33,10 +34,10 @@ services:
       - ./static:/app/static
       - ./.env:/app/.env
     environment:
-      - DATABASE_URL=postgresql://${DB_USER:-gdial}:${DB_PASSWORD:-gdialpassword}@postgres:5432/${DB_NAME:-gdial}
+      - DATABASE_URL=postgresql://${DB_USER:-gdial}:${DB_PASSWORD:-gdialpassword}@backend-db:5432/${DB_NAME:-gdial}
       - PUBLIC_URL=${PUBLIC_URL:-http://localhost:3003}
     depends_on:
-      postgres:
+      backend-db:
         condition: service_healthy
     ports:
       - "${API_PORT:-3003}:3003"
@@ -45,8 +46,8 @@ services:
     restart: unless-stopped
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3003", "--reload"]
 
-  # CLI-verktyg för testning av samtal
-  cli:
+  # Backend CLI-verktyg för testning av samtal
+  backend-cli:
     build:
       context: .
       dockerfile: Dockerfile.cli
@@ -58,9 +59,9 @@ services:
     networks:
       - gdial-network
     depends_on:
-      - api
+      - backend-api
     profiles:
-      - tools
+      - backend-tools
     entrypoint: ["/app/docker-entrypoint.sh"]
     command: ["--help"]
 
@@ -75,13 +76,13 @@ services:
     networks:
       - gdial-network
     depends_on:
-      - api
+      - backend-api
     profiles:
       - frontend
     command: sh -c "npm install && npm run dev"
 
-  # Outbox Worker för asynkrona jobb
-  outbox-worker:
+  # Backend Worker för asynkrona jobb
+  backend-worker:
     build:
       context: .
       dockerfile: Dockerfile
@@ -89,16 +90,16 @@ services:
       - ./app:/app/app
       - ./.env:/app/.env
     environment:
-      - DATABASE_URL=postgresql://${DB_USER:-gdial}:${DB_PASSWORD:-gdialpassword}@postgres:5432/${DB_NAME:-gdial}
+      - DATABASE_URL=postgresql://${DB_USER:-gdial}:${DB_PASSWORD:-gdialpassword}@backend-db:5432/${DB_NAME:-gdial}
     depends_on:
-      postgres:
+      backend-db:
         condition: service_healthy
     networks:
       - gdial-network
     restart: unless-stopped
     command: ["python", "-m", "app.outbox_worker"]
     profiles:
-      - workers
+      - backend-workers
 
 networks:
   gdial-network:

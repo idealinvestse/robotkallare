@@ -1,6 +1,6 @@
 #!/bin/bash
-# GDial Launch Script
-# Detta skript gör det enkelt att konfigurera och starta GDial-systemet med Docker Compose
+# GDial Backend Launch Script
+# Detta skript gör det enkelt att konfigurera och starta GDial-backend med Docker Compose
 
 set -e
 clear
@@ -128,68 +128,68 @@ EOF
 fi
 
 # Fråga vilka komponenter som ska startas
-echo -e "\n${BLUE}=== Vilka komponenter vill du starta? ===${NC}"
-echo "1) Endast API (minimalt system)"
-echo "2) API + Databas (standard)"
-echo "3) Komplett system (API, Databas, Worker)"
-echo "4) Utvecklingsläge (API, Databas, Worker, Frontend)"
+echo -e "\n${BLUE}=== Vilka backend-komponenter vill du starta? ===${NC}"
+echo "1) Endast Backend-API (minimalt system)"
+echo "2) Backend-API + Databas (standard)"
+echo "3) Komplett backend (API, Databas, Worker)"
+echo "4) Utvecklingsläge (Backend + Frontend)"
 read -p "Välj ett alternativ [2]: " components
 components=${components:-2}
 
 # Bygg Docker-images
-echo -e "\n${YELLOW}Bygger Docker-images...${NC}"
+echo -e "\n${YELLOW}Bygger Backend Docker-images...${NC}"
 case $components in
     1)
-        docker compose build api
-        startup_command="docker compose up -d api"
+        docker compose build backend-api
+        startup_command="docker compose up -d backend-api"
         ;;
     2)
-        docker compose build api
-        startup_command="docker compose up -d postgres api"
+        docker compose build backend-api
+        startup_command="docker compose up -d backend-db backend-api"
         ;;
     3)
-        docker compose build api
-        startup_command="docker compose up -d postgres api --profile workers"
+        docker compose build backend-api backend-worker
+        startup_command="docker compose up -d backend-db backend-api --profile backend-workers"
         ;;
     4)
         docker compose build
-        startup_command="docker compose up -d postgres api --profile workers --profile frontend"
+        startup_command="docker compose up -d backend-db backend-api --profile backend-workers --profile frontend"
         ;;
     *)
         echo -e "${RED}Ogiltigt val. Använder standardalternativet.${NC}"
-        docker compose build api
-        startup_command="docker compose up -d postgres api"
+        docker compose build backend-api
+        startup_command="docker compose up -d backend-db backend-api"
         ;;
 esac
 
-# Fråga om CLI-verktyget också ska byggas
-read -p "Vill du också bygga CLI-verktyget för testning? (y/n) [y]: " build_cli
+# Fråga om Backend CLI-verktyget också ska byggas
+read -p "Vill du också bygga Backend CLI-verktyget för testning? (y/n) [y]: " build_cli
 build_cli=${build_cli:-y}
 
 if [ "$build_cli" == "y" ]; then
-    echo -e "${YELLOW}Bygger CLI-verktyget...${NC}"
-    docker compose build cli
+    echo -e "${YELLOW}Bygger Backend CLI-verktyget...${NC}"
+    docker compose build backend-cli
 fi
 
-# Starta systemet
-echo -e "\n${YELLOW}Startar GDial-systemet...${NC}"
+# Starta backend-systemet
+echo -e "\n${YELLOW}Startar GDial Backend...${NC}"
 eval $startup_command
 
 # Visa information om körstatus
-echo -e "\n${GREEN}GDial-systemet har startats!${NC}"
-echo -e "API-server körs på: ${PUBLIC_URL}"
+echo -e "\n${GREEN}GDial Backend har startats!${NC}"
+echo -e "Backend API-server körs på: ${PUBLIC_URL}"
 
 if [ "$build_cli" == "y" ]; then
-    echo -e "\n${BLUE}För att köra CLI-verktyget:${NC}"
-    echo -e "docker compose run --rm cli"
+    echo -e "\n${BLUE}För att köra Backend CLI-verktyget:${NC}"
+    echo -e "docker compose run --rm backend-cli"
     echo -e "eller för att ringa ett testsamtal:"
-    echo -e "docker compose run --rm cli call --mode tts --phone +XXXXXXXXXX --message \"Testmeddelande\""
+    echo -e "docker compose run --rm backend-cli call --mode tts --phone +XXXXXXXXXX --message \"Testmeddelande\""
 fi
 
-echo -e "\n${BLUE}För att stoppa systemet:${NC}"
+echo -e "\n${BLUE}För att stoppa backend-systemet:${NC}"
 echo -e "docker compose down"
 
-echo -e "\n${BLUE}För att visa loggar:${NC}"
+echo -e "\n${BLUE}För att visa backend-loggar:${NC}"
 echo -e "docker compose logs -f"
 
-echo -e "\n${GREEN}Lycka till med GDial!${NC}"
+echo -e "\n${GREEN}Lycka till med GDial Backend!${NC}"
