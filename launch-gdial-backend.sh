@@ -152,7 +152,7 @@ case $components in
         startup_command="docker compose up -d backend-db backend-api --profile backend-workers"
         ;;
     4)
-        docker compose build
+        docker compose build # Bygger alla definierade tjänster, inklusive frontend
         startup_command="docker compose up -d backend-db backend-api --profile backend-workers --profile frontend"
         ;;
     *)

@@ -1,0 +1,31 @@
+# Steg 1: Bygg steg (Build Stage)
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Kopiera package.json och package-lock.json
+COPY frontend_new/package*.json ./
+
+# Installera beroenden
+RUN npm ci
+
+# Kopiera resten av frontend-koden
+COPY frontend_new/ .
+
+# Bygg produktionsversionen
+RUN npm run build
+
+# Steg 2: Produktions steg (Production Stage)
+FROM nginx:1.25-alpine
+
+# Kopiera byggda filer från byggsteget till Nginx-servern
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Kopiera Nginx-konfiguration (om vi behöver anpassad konfiguration senare)
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Exponera port 80 (standard Nginx-port)
+EXPOSE 80
+
+# Standardkommandot för Nginx startar servern
+CMD ["nginx", "-g", "daemon off;"]
