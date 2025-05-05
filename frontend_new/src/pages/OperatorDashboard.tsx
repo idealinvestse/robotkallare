@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import { useGroups } from '../hooks/useGroups';
-import { ContactStatus, Contact } from '../types/operator';
+import { useCallStatus, triggerCall, manualCall, confirmCall, postponeCall } from '../hooks/useCallStatus';
+import { ContactStatus } from '../types/operator';
+import CallStatusPanel from '../components/CallStatusPanel';
 
 // Status badge component with color coding for different statuses
 const StatusBadge: React.FC<{ status: ContactStatus }> = ({ status }) => {
@@ -49,28 +51,60 @@ const StatusBadge: React.FC<{ status: ContactStatus }> = ({ status }) => {
 const OperatorDashboard: React.FC = () => {
   const { data: contacts, isLoading: contactsLoading, error: contactsError } = useContacts();
   const { data: groups, isLoading: groupsLoading, error: groupsError } = useGroups();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ContactStatus | 'ALL'>('ALL');
-  const [groupFilter, setGroupFilter] = useState<string>('ALL');
+  const { data: callStatusData, isLoading: callStatusLoading, error: callStatusError } = useCallStatus();
+  
+  // Callback-funktioner för CallStatusPanel
+  const handleTriggerCall = useCallback((contactId: string) => {
+    triggerCall(contactId).then(() => {
+      console.log(`Trigger call for: ${contactId}`);
+    }).catch(error => {
+      console.error('Error triggering call:', error);
+    });
+  }, []);
+  
+  const handleManualCall = useCallback((contactId: string) => {
+    manualCall(contactId).then(() => {
+      console.log(`Manual call for: ${contactId}`);
+    }).catch(error => {
+      console.error('Error initiating manual call:', error);
+    });
+  }, []);
+  
+  const handleConfirmCall = useCallback((contactId: string) => {
+    confirmCall(contactId).then(() => {
+      console.log(`Confirm call for: ${contactId}`);
+    }).catch(error => {
+      console.error('Error confirming call:', error);
+    });
+  }, []);
+  
+  const handlePostponeCall = useCallback((contactId: string, delayMinutes: number) => {
+    postponeCall(contactId, delayMinutes).then(() => {
+      console.log(`Postpone call for: ${contactId} by ${delayMinutes} minutes`);
+    }).catch(error => {
+      console.error('Error postponing call:', error);
+    });
+  }, []);
 
-  // Loading states
-  if (contactsLoading || groupsLoading) {
+  // Laddnings-state
+  if (contactsLoading || groupsLoading || callStatusLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
           <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-          <p className="text-lg font-medium text-gray-700">Laddar kontakter och grupper...</p>
+          <p className="text-lg font-medium text-gray-700">Laddar data...</p>
         </div>
       </div>
     );
   }
 
-  // Error state
-  if (contactsError || groupsError) {
+  // Felhantering
+  const error = contactsError || groupsError || callStatusError;
+  if (error) {
     return (
       <div className="m-6 rounded-lg bg-red-50 p-4 text-red-800 shadow-sm">
         <h3 className="mb-2 font-bold">Ett fel uppstod</h3>
-        <p>{contactsError?.message || groupsError?.message}</p>
+        <p>{error.message}</p>
         <button 
           className="mt-4 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
           onClick={() => window.location.reload()}
@@ -81,197 +115,95 @@ const OperatorDashboard: React.FC = () => {
     );
   }
 
-  // Calculate stats
-  const totalContacts = contacts?.length || 0;
-  const confirmedContacts = contacts?.filter(c => c.status === 'CONFIRMED').length || 0;
-  const pendingContacts = contacts?.filter(c => ['PENDING', 'SCHEDULED'].includes(c.status)).length || 0;
-  const actionableContacts = contacts?.filter(c => ['NO_ANSWER', 'MANUAL_NEEDED', 'ERROR'].includes(c.status)).length || 0;
-  const progressPercentage = totalContacts > 0 ? Math.round((confirmedContacts / totalContacts) * 100) : 0;
-
-  // Filter and search logic
-  const filteredContacts = contacts?.filter(contact => {
-    // Status filter
-    if (statusFilter !== 'ALL' && contact.status !== statusFilter) return false;
-    
-    // Search term
-    if (searchTerm && !contact.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
-        !contact.primaryPhone.includes(searchTerm)) return false;
-    
-    // Group filter - would need proper group-contact relationships
-    // This is a placeholder - actual implementation would depend on data structure
-    return true;
-  });
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Stats Header */}
-      <div className="bg-white p-6 shadow-sm">
-        <h1 className="mb-6 text-2xl font-bold text-gray-900">Operatörspanel</h1>
-        
-        <div className="mb-6 grid gap-4 md:grid-cols-4">
-          <div className="rounded-lg border bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-500">Totalt antal kontakter</h3>
-            <p className="text-2xl font-bold text-gray-900">{totalContacts}</p>
-          </div>
-          
-          <div className="rounded-lg border bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-500">Bekräftade</h3>
-            <p className="text-2xl font-bold text-green-600">{confirmedContacts}</p>
-          </div>
-          
-          <div className="rounded-lg border bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-500">Väntande</h3>
-            <p className="text-2xl font-bold text-blue-600">{pendingContacts}</p>
-          </div>
-          
-          <div className="rounded-lg border bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-500">Behöver åtgärd</h3>
-            <p className="text-2xl font-bold text-yellow-600">{actionableContacts}</p>
-          </div>
+      {/* Header med titel */}
+      <div className="bg-white p-6 border-b">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">GDial - Ringrobotens Kontrollpanel</h1>
+          <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Nytt utskick
+          </button>
         </div>
-
-        <div className="mb-4 h-4 overflow-hidden rounded-full bg-gray-200">
-          <div 
-            className="h-full bg-green-500 transition-all duration-500" 
-            style={{ width: `${progressPercentage}%` }}
-          ></div>
-        </div>
-        <p className="text-sm text-gray-600">{progressPercentage}% bekräftade</p>
       </div>
-
-      {/* Filters and Search */}
-      <div className="border-b bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="w-full md:w-64">
-            <label htmlFor="search" className="sr-only">Sök</label>
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+      
+      <div className="p-6">
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Primär sektion - Samtalskontroll */}
+          <div className="lg:col-span-2">
+            <CallStatusPanel 
+              contacts={contacts || []} 
+              onTriggerCall={handleTriggerCall}
+              onManualCall={handleManualCall}
+              onConfirmCall={handleConfirmCall}
+              onPostponeCall={handlePostponeCall}
+            />
+          </div>
+          
+          {/* Sidopanel med grupplista */}
+          <div>
+            <div className="bg-white rounded-lg shadow divide-y divide-gray-200">
+              <div className="p-4">
+                <h3 className="text-lg font-medium">Kontaktgrupper</h3>
+                <p className="text-sm text-gray-500 mt-1">Välj en grupp för att visa dess kontakter</p>
               </div>
-              <input
-                id="search"
-                type="search"
-                className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm"
-                placeholder="Sök på namn eller telefon..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              
+              <div className="p-4 max-h-96 overflow-y-auto">
+                <ul className="space-y-2">
+                  {groups && groups.length > 0 ? (
+                    groups.map(group => (
+                      <li key={group.id} className="p-2 rounded hover:bg-gray-50 cursor-pointer">
+                        <div className="font-medium">{group.name}</div>
+                        <div className="text-sm text-gray-500">{group.contacts.length} kontakter</div>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-gray-500 text-sm">Inga grupper tillgängliga.</li>
+                  )}
+                </ul>
+              </div>
+              
+              <div className="p-4 bg-gray-50">
+                <button className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  Hantera grupper
+                </button>
+              </div>
             </div>
-          </div>
-
-          <div>
-            <label htmlFor="status-filter" className="mr-2 text-sm font-medium text-gray-700">Status:</label>
-            <select
-              id="status-filter"
-              className="rounded-lg border border-gray-300 bg-white py-1.5 pl-3 pr-7 text-sm"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as ContactStatus | 'ALL')}
-            >
-              <option value="ALL">Alla</option>
-              <option value="CONFIRMED">Bekräftade</option>
-              <option value="PENDING">Väntande</option>
-              <option value="SCHEDULED">Schemalagda</option>
-              <option value="NO_ANSWER">Inget svar</option>
-              <option value="MANUAL_NEEDED">Manuell åtgärd</option>
-              <option value="ERROR">Fel</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="group-filter" className="mr-2 text-sm font-medium text-gray-700">Grupp:</label>
-            <select
-              id="group-filter"
-              className="rounded-lg border border-gray-300 bg-white py-1.5 pl-3 pr-7 text-sm"
-              value={groupFilter}
-              onChange={(e) => setGroupFilter(e.target.value)}
-            >
-              <option value="ALL">Alla grupper</option>
-              {groups?.map(group => (
-                <option key={group.id} value={group.id}>{group.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Contact List */}
-      <div className="m-4">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-medium text-gray-900">Kontakter</h2>
-          <p className="text-sm text-gray-600">Visar {filteredContacts?.length || 0} av {totalContacts} kontakter</p>
-        </div>
-
-        {/* Table - optimized for large lists */}
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Namn</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Telefon</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Senaste försök</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Åtgärder</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {filteredContacts && filteredContacts.length > 0 ? (
-                filteredContacts.map((contact) => (
-                  <tr key={contact.id} className="hover:bg-gray-50">
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="font-medium text-gray-900">{contact.name}</div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{contact.primaryPhone}</td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <StatusBadge status={contact.status} />
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                      {contact.lastAttemptTime ? 
-                        new Date(contact.lastAttemptTime).toLocaleString('sv-SE', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        }) : 'Ej kontaktad'}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                      <button className="mr-2 rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700">Ring</button>
-                      <button className="rounded bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200">Mer</button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
-                    {searchTerm || statusFilter !== 'ALL' ? 
-                      'Inga kontakter matchade sökningen.' : 
-                      'Inga kontakter hittades.'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination placeholder */}
-        <div className="mt-4 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            <span>Sida 1 av 1</span>
-          </div>
-          <div className="flex space-x-2">
-            <button 
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              disabled={true}
-            >
-              Föregående
-            </button>
-            <button 
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              disabled={true}
-            >
-              Nästa
-            </button>
+            
+            {/* Snabblänkar */}
+            <div className="mt-6 bg-white rounded-lg shadow p-4">
+              <h3 className="text-lg font-medium mb-3">Snabbfunktioner</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button className="p-3 border rounded-md hover:bg-gray-50 flex flex-col items-center text-gray-700">
+                  <svg className="w-6 h-6 mb-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <span className="text-sm">Mallar</span>
+                </button>
+                <button className="p-3 border rounded-md hover:bg-gray-50 flex flex-col items-center text-gray-700">
+                  <svg className="w-6 h-6 mb-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm">Schemalägg</span>
+                </button>
+                <button className="p-3 border rounded-md hover:bg-gray-50 flex flex-col items-center text-gray-700">
+                  <svg className="w-6 h-6 mb-1 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <span className="text-sm">Rapporter</span>
+                </button>
+                <button className="p-3 border rounded-md hover:bg-gray-50 flex flex-col items-center text-gray-700">
+                  <svg className="w-6 h-6 mb-1 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-sm">Inställningar</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
