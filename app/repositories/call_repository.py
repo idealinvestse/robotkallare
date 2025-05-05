@@ -173,10 +173,48 @@ class CallRepository:
         return call_log
     
     def get_call_log_by_sid(self, call_sid: str) -> Optional[CallLog]:
-        """Get a call log by SID."""
+        """Get a call log entry by its Twilio CallSid."""
         return self.session.exec(
             select(CallLog).where(CallLog.call_sid == call_sid)
         ).first()
+
+    def get_call_log_by_sid(self, call_sid: str) -> Optional[CallLog]:
+        """Get a call log entry by its Twilio CallSid."""
+        return self.session.exec(
+            select(CallLog).where(CallLog.call_sid == call_sid)
+        ).first()
+
+    def create_call_log(
+        self,
+        contact_id: uuid.UUID,
+        phone_number_id: uuid.UUID,
+        call_sid: str,
+        status: str,
+        answered: bool = False,
+        digits: Optional[str] = None,
+        message_id: Optional[uuid.UUID] = None,
+        custom_message_log_id: Optional[uuid.UUID] = None,
+        scheduled_message_id: Optional[uuid.UUID] = None,
+        call_run_id: Optional[uuid.UUID] = None
+    ) -> CallLog:
+        """Create and save a call log entry."""
+        log = CallLog(
+            contact_id=contact_id,
+            phone_number_id=phone_number_id,
+            call_sid=call_sid,
+            started_at=datetime.now(),
+            answered=answered,
+            digits=digits,
+            status=status,
+            message_id=message_id,
+            custom_message_log_id=custom_message_log_id,
+            scheduled_message_id=scheduled_message_id,
+            call_run_id=call_run_id
+        )
+        self.session.add(log)
+        self.session.commit()
+        self.session.refresh(log)
+        return log
     
     def create_custom_message_log(
         self,

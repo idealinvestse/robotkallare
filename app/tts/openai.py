@@ -9,6 +9,7 @@ from pathlib import Path
 
 import openai
 from pydub import AudioSegment
+from openai import OpenAI
 
 logger = logging.getLogger("openai_tts")
 
@@ -16,6 +17,7 @@ logger = logging.getLogger("openai_tts")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_TTS_MODEL = os.getenv("OPENAI_TTS_MODEL", "tts-1")
 AUDIO_DIR = Path("static/audio")
+OUTPUT_FORMATS = {"mp3", "wav", "flac", "aac", "opus", "pcm"}
 
 # Ensure audio dir exists
 os.makedirs(AUDIO_DIR, exist_ok=True)
@@ -44,26 +46,27 @@ def generate_audio_openai(text, output_format="mp3", file_id=None, voice=None):
         logger.error("OPENAI_API_KEY not set")
         return None
 
-    openai.api_key = OPENAI_API_KEY
+    if output_format.lower() not in OUTPUT_FORMATS:
+        logger.error(f"Unsupported output format: {output_format}")
+        return None
+
     try:
-        response = openai.audio.speech.create(
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        response = client.audio.speech.create(
             model=OPENAI_TTS_MODEL,
-            voice=voice,
-            input=text
+            voice=voice or "alloy",
+            input=text,
+            format=output_format.lower()
         )
-        audio_bytes = response.audio
-        # Save WAV
-        wav_path = AUDIO_DIR / f"{file_id}.wav"
-        with open(wav_path, "wb") as f:
+        audio_bytes = response.content if hasattr(response, "content") else getattr(response, "audio", None)
+        if not audio_bytes:
+            logger.error("No audio bytes returned from OpenAI")
+            return None
+        
+        out_path = AUDIO_DIR / f"{file_id}.{output_format.lower()}"
+        with open(out_path, "wb") as f:
             f.write(audio_bytes)
-        if output_format.lower() == "wav":
-            return wav_path
-        # Convert to MP3
-        mp3_path = AUDIO_DIR / f"{file_id}.mp3"
-        audio_seg = AudioSegment.from_wav(wav_path)
-        audio_seg.export(mp3_path, format="mp3")
-        os.remove(wav_path)
-        return mp3_path
+        return out_path
     except Exception as e:
         logger.error(f"Error generating speech with OpenAI: {e}", exc_info=True)
         return None

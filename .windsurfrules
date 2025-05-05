@@ -20,3 +20,20 @@ Coding pattern preferences
 - Don’t touch code that is unrelated to the task
 - Write thorough tests for all major functionality
 - Avoid making major changes to the patterns and architecture of how feature works, after it has shown to work well, unless explicitly instructed
+- When adding new features, always add tests for them
+- Keep files between 200–300 lines of code
+- Refactor files that are over 200–300 lines of code
+- Write simple solutions to problems
+- Avoid over-engineering solutions to problems
+- Maintain and update documentation as you go, both technical and user documentation.
+
+
+# Testing preferences
+
+- Write tests for all major functionality
+- Use pytest for testing
+- Use pytest-asyncio for testing async functions
+- Use pytest-cov for coverage reporting
+- Use pytest-mock for mocking
+- Use pytest-asyncio for testing async functions
+

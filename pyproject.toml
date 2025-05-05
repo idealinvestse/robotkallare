@@ -16,5 +16,3 @@ include = ["app*"]  # Inkludera app-paketet och dess subpaket
 exclude = ["tests*"] # Exkludera tester
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto" # Automatically handle asyncio setup
-asyncio_default_fixture_loop_scope = "function" # Recommended explicit scope

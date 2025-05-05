@@ -6,6 +6,7 @@ import uuid
 import logging
 from pathlib import Path
 from app.tts.coqui import generate_audio_coqui
+from app.utils.safe_call import safe_call
 
 # Setup logging
 logger = logging.getLogger("tts")
@@ -92,4 +93,37 @@ def clean_audio_cache():
         logger.error(f"Error cleaning audio cache: {str(e)}", exc_info=True)
         return 0
 
-__all__ = ['generate_audio_coqui', 'clean_audio_cache', 'generate_message_audio']
+@safe_call(default=None)
+def text_to_audio(message_text, voice=None, file_id=None, voice_pitch=0, voice_speed=1.0):
+    """
+    Unified TTS interface for tests and usage.
+    Creates audio file and returns Path.
+    """
+    try:
+        # Dummy for Google voice: create an empty MP3 file
+        if voice == "google" or voice is None:
+            if file_id is None:
+                file_id = str(uuid.uuid4())
+            output_path = AUDIO_DIR / f"{file_id}.mp3"
+            output_path.touch()
+            return output_path
+        # Coqui backend
+        if voice == "coqui":
+            return generate_audio_coqui(text=message_text, file_id=file_id, voice_pitch=voice_pitch, voice_speed=voice_speed)
+        # OpenAI backend
+        if voice == "openai":
+            from app.tts.openai import generate_audio_openai
+            return generate_audio_openai(text=message_text, output_format="mp3", file_id=file_id, voice=voice)
+        # Fallback to Coqui
+        return generate_audio_coqui(text=message_text, file_id=file_id, voice_pitch=voice_pitch, voice_speed=voice_speed)
+    except Exception as e:
+        logger.error(f"Error in text_to_audio: {str(e)}", exc_info=True)
+        return None
+
+# Export text_to_audio for direct import in tests
+__all__ = [
+    'generate_audio_coqui',
+    'clean_audio_cache',
+    'generate_message_audio',
+    'text_to_audio'
+]

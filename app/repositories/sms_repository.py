@@ -110,6 +110,12 @@ class SmsRepository:
             select(Contact).options(selectinload(Contact.phone_numbers))
         ).all()
     
+    def get_sms_log_by_sid(self, message_sid: str) -> Optional[SmsLog]:
+        """Get an SMS log entry by its Twilio MessageSid."""
+        return self.session.exec(
+            select(SmsLog).where(SmsLog.message_sid == message_sid)
+        ).first()
+
     def create_sms_log(
         self,
         contact_id: Union[uuid.UUID, str],

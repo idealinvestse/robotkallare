@@ -11,7 +11,182 @@ from typing import Dict, Any, Optional, List
 
 from sqlmodel import Session, select
 from app.database import get_session, engine
-from app.models.settings import SystemSetting, DtmfSetting, SmsSettings, NotificationSettings, SecuritySettings
+import uuid
+from sqlmodel import Field, SQLModel, Relationship, JSON, Column
+from pydantic_settings import BaseSettings
+
+class SystemSetting(SQLModel, table=True):
+    """System settings that control GDial's behavior.
+    These are admin-level settings that control core functionality.
+    """
+    key: str = Field(primary_key=True)
+    value: str
+    value_type: str = "string"  # string, int, float, boolean, json
+    description: str
+    group: str = "general"  # general, calls, sms, dtmf, integrations, etc.
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    
+    @classmethod
+    def get_value(cls, session, key: str, default: Any = None) -> Any:
+        setting = session.query(cls).filter(cls.key == key).first()
+        if not setting:
+            return default
+        # Convert value to appropriate type
+        if setting.value_type == "int":
+            return int(setting.value)
+        elif setting.value_type == "float":
+            return float(setting.value)
+        elif setting.value_type == "boolean":
+            return setting.value.lower() in ["true", "1", "yes", "y"]
+        elif setting.value_type == "json":
+            import json
+            return json.loads(setting.value)
+        else:
+            return setting.value
+    
+    @classmethod 
+    def set_value(cls, session, key: str, value: Any, 
+                 description: Optional[str] = None, 
+                 group: Optional[str] = None,
+                 value_type: Optional[str] = None):
+        setting = session.query(cls).filter(cls.key == key).first()
+        if not setting:
+            setting = cls(key=key)
+        setting.value = str(value)
+        if value_type:
+            setting.value_type = value_type
+        elif not hasattr(setting, 'value_type') or not setting.value_type:
+            if isinstance(value, bool):
+                setting.value_type = "boolean"
+            elif isinstance(value, int):
+                setting.value_type = "int"
+            elif isinstance(value, float):
+                setting.value_type = "float"
+            elif isinstance(value, dict) or isinstance(value, list):
+                setting.value_type = "json"
+                import json
+                setting.value = json.dumps(value)
+            else:
+                setting.value_type = "string"
+        if description:
+            setting.description = description
+        if group:
+            setting.group = group
+        setting.updated_at = datetime.now()
+        session.add(setting)
+        session.commit()
+        return setting
+
+class DtmfSetting(SQLModel, table=True):
+    """Extended settings for DTMF response behaviors.
+    Controls how DTMF responses are handled in emergency calls.
+    """
+    id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
+    max_attempts: int = 3
+    input_timeout: int = 10
+    confirm_response: bool = False
+    retry_on_invalid: bool = True
+    additional_digits: Optional[str] = None
+    universal_gather: bool = True
+    repeat_message_digit: str = "0"
+    confirm_receipt_digit: str = "1"
+    request_callback_digit: str = "8"
+    transfer_to_live_agent_digit: str = "9"
+    dtmf_menu_style: str = "standard"
+    inter_digit_timeout: int = 3
+    allow_message_skip: bool = True
+    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+class SmsSettings(SQLModel, table=True):
+    """SMS configuration settings.
+    Controls how SMS messages are formatted and sent.
+    """
+    id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
+    include_sender_name: bool = True
+    message_prefix: str = "EMERGENCY: "
+    message_suffix: str = ""
+    max_length: int = 160
+    split_long_messages: bool = True
+    batch_delay_ms: int = 1000
+    batch_size: int = 50
+    status_callback_url: Optional[str] = None
+    sms_rate_limit_per_second: int = 10
+    allow_opt_out: bool = True
+    opt_out_keyword: str = "STOP"
+    delivery_report_timeout: int = 60
+    fail_silently: bool = True
+    sms_retry_strategy: str = "exponential"
+    sms_url_shortener: bool = False
+    international_sms_enabled: bool = False
+    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+class NotificationSettings(SQLModel, table=True):
+    """Settings for internal system notifications.
+    Controls how and when notifications are sent to admins about system events.
+    """
+    id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
+    admin_email: Optional[str] = None
+    notify_on_emergency: bool = True
+    notify_on_error: bool = True
+    failure_threshold_pct: int = 10
+    daily_reports: bool = False
+    weekly_reports: bool = True
+    alert_sound_enabled: bool = True
+    admin_phone_numbers: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    webhook_url: Optional[str] = None
+    usage_report_frequency: str = "weekly"
+    emergency_escalation_threshold: int = 15
+    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+class SecuritySettings(SQLModel, table=True):
+    """Security-related settings for the application.
+    Controls security features and behavior.
+    """
+    id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
+    force_https: bool = True
+    sensitive_data_masking: bool = True
+    auto_logout_inactive_min: int = 30
+    max_login_attempts: int = 5
+    password_expiry_days: int = 90
+    api_rate_limit: int = 100
+    audit_log_retention_days: int = 365
+    ip_whitelist: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    allowed_origins: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+class RealtimeSettings(SQLModel, table=True):
+    """Real-time AI call settings for the application.
+    Controls behavior of real-time AI calls and related features.
+    """
+    id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
+    openai_api_key: str = ""
+    voice: str = "alloy"
+    system_message: str = "You are a helpful assistant representing our organization. Keep responses brief and professional."
+    max_call_duration_minutes: int = 15
+    use_dtmf_fallback: bool = True
+    record_calls: bool = True
+    greeting_message: str = "Hello, I'm an AI assistant. How can I help you today?"
+    goodbye_message: str = "Thank you for calling. Have a great day!"
+    call_fallback_message: str = "I'm having trouble connecting to the AI service. Please try again later."
+    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    
+    def update(self, **kwargs):
+        """Update attributes on the settings object"""
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+        self.updated_at = datetime.now()
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -40,6 +215,53 @@ def get_system_setting(session: Session, key: str, default_value: Any = None) ->
 
 # Default system settings - these are used if no settings exist in the database
 DEFAULT_SYSTEM_SETTINGS = {
+    "realtime": {
+        "openai_api_key": {
+            "value": "",  # Empty by default for security, must be set in environment or admin interface
+            "description": "OpenAI API key for realtime calls",
+            "group": "realtime"
+        },
+        "voice": {
+            "value": "alloy",
+            "description": "OpenAI voice for realtime calls (alloy, echo, fable, onyx, nova, shimmer)",
+            "group": "realtime"
+        },
+        "system_message": {
+            "value": "You are a helpful assistant representing our organization. Keep responses brief and professional.",
+            "description": "System message that guides AI behavior during calls",
+            "group": "realtime"
+        },
+        "max_call_duration_minutes": {
+            "value": "15",
+            "description": "Maximum duration for realtime AI calls in minutes",
+            "group": "realtime"
+        },
+        "use_dtmf_fallback": {
+            "value": "true",
+            "description": "Enable fallback to DTMF if speech recognition fails",
+            "group": "realtime"
+        },
+        "record_calls": {
+            "value": "true",
+            "description": "Whether to record calls for quality assurance",
+            "group": "realtime"
+        },
+        "greeting_message": {
+            "value": "Hello, I'm an AI assistant. How can I help you today?",
+            "description": "Initial greeting message for realtime calls",
+            "group": "realtime"
+        },
+        "goodbye_message": {
+            "value": "Thank you for calling. Have a great day!",
+            "description": "Goodbye message for realtime calls",
+            "group": "realtime"
+        },
+        "call_fallback_message": {
+            "value": "I'm having trouble connecting to the AI service. Please try again later.",
+            "description": "Message to play if the AI service fails",
+            "group": "realtime"
+        }
+    },
     "system": {
         "app_name": {
             "value": "GDial",
@@ -313,9 +535,13 @@ def get_notification_settings(session: Session) -> Optional[NotificationSettings
     """Get notification settings from database."""
     return session.query(NotificationSettings).first()
 
-def get_security_settings(session: Session) -> Optional[SecuritySettings]:
+def get_security_settings(session: Session) -> SecuritySettings:
     """Get security settings from database."""
-    return session.query(SecuritySettings).first()
+    return session.query(SecuritySettings).first() or SecuritySettings()
+
+def get_realtime_settings(session: Session) -> RealtimeSettings:
+    """Get realtime AI call settings from database."""
+    return session.query(RealtimeSettings).first() or RealtimeSettings()
 
 def get_settings_by_group(session: Session, group_name: Optional[str] = None) -> Dict[str, List[SystemSetting]]:
     """Get settings organized by group."""
@@ -333,3 +559,60 @@ def get_settings_by_group(session: Session, group_name: Optional[str] = None) ->
         settings_by_group[setting.group].append(setting)
     
     return settings_by_group
+
+# --- Environment-based Settings --- 
+class AppSettings(BaseSettings):
+    # Database
+    DATABASE_URL: Optional[str] = "sqlite:///./gdial.db" # Default to SQLite if not set
+
+    # RabbitMQ
+    RABBITMQ_URL: str = "amqp://guest:guest@localhost/"
+    
+    # Logging
+    LOG_LEVEL: str = "INFO"
+
+    # CORS
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+
+    # Scheduler Intervals (in minutes)
+    AUDIO_CACHE_CLEANUP_INTERVAL_MINUTES: int = 60
+    BURN_MESSAGE_CLEANUP_INTERVAL_MINUTES: int = 15
+
+    # Twilio Credentials
+    TWILIO_ACCOUNT_SID: Optional[str] = None
+    TWILIO_AUTH_TOKEN: Optional[str] = None
+    TWILIO_PHONE_NUMBER: Optional[str] = None
+    TWILIO_FROM_NUMBER: Optional[str] = None
+
+    # Security / JWT
+    SECRET_KEY: str = "a_very_secret_key_needs_to_be_set_in_env_for_production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
+    # OpenAI
+    OPENAI_API_KEY: Optional[str] = None
+
+    # Add other environment variables identified from errors or known requirements
+    # (Adjust types as needed, e.g., int, bool)
+    AUDIO_DIR: str = "static/audio" # Example from errors
+    MAX_SECONDARY_ATTEMPTS: Optional[int] = None # Example from errors
+    OPENAI_TTS_MODEL: Optional[str] = None # Example from errors
+
+    # More variables from latest errors
+    API_HOST: str = "127.0.0.1"
+    API_PORT: int = 8000
+    BASE_URL: str = "http://localhost:8000"
+    PUBLIC_URL: Optional[str] = None # Often same as BASE_URL if not behind proxy
+    SQLITE_DB: Optional[str] = "sqlite:///./gdial.db" # Likely redundant if DATABASE_URL is used
+    CALL_TIMEOUT_SEC: int = 30
+    SECONDARY_BACKOFF_SEC: int = 60
+
+
+    class Config:
+        env_file = '.env'
+        env_file_encoding = 'utf-8'
+
+# Instantiate the settings object to be imported by other modules
+settings = AppSettings()
+
+logger.info(f"AppSettings loaded. Log Level: {settings.LOG_LEVEL}, CORS Origins: {settings.CORS_ORIGINS}")

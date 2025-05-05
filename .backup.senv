@@ -1,0 +1,16 @@
+TWILIO_ACCOUNT_SID=ACb0bf3d72009277129354b7ca98c1bd0a
+TWILIO_AUTH_TOKEN=16a0925c41ab3f64976f9e16374f677d
+TWILIO_FROM_NUMBER=+17159530862
+API_HOST=localhost
+API_PORT=3003
+BASE_URL=http://titanic.urem.org
+PUBLIC_URL=http://titanic.urem.org
+SQLITE_DB=sqlite:///./dialer.db # SQLite database file path
+CALL_TIMEOUT_SEC=25
+SECONDARY_BACKOFF_SEC=120
+MAX_SECONDARY_ATTEMPTS=2
+
+# Security settings for JWT
+SECRET_KEY="your_strong_secret_key_here" # CHANGE THIS to a strong, random key
+ALGORITHM="HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES=30 # Token validity period in minutes

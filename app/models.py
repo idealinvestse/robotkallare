@@ -1,7 +1,51 @@
 import uuid
 from datetime import datetime
 from typing import Optional, List
+from enum import Enum
 from sqlmodel import Field, SQLModel, Relationship, select, JSON, Column
+
+# Import realtime-specific schemas
+from app.realtime.schemas import RealtimeCallStatus
+
+# Support Model.select() in tests: map to sqlmodel.select(Model)
+SQLModel.select = classmethod(lambda cls: select(cls))
+
+class OutboxJobStatus(str, Enum):
+    PENDING = "pending"
+    SENT = "sent"
+    FAILED = "failed"
+
+class OutboxJob(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    service: str  # e.g. "rabbitmq" or "twilio"
+    payload: Optional[dict] = Field(default=None, sa_column=Column(JSON))  # JSON-serializable dict of args/kwargs
+    attempts: int = 0
+    last_error: Optional[str] = None
+    status: OutboxJobStatus = Field(default=OutboxJobStatus.PENDING)
+
+class OutreachCampaign(SQLModel, table=True):
+    id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: Optional[str] = Field(default=None)
+    description: Optional[str] = Field(default=None)
+    message_id: uuid.UUID = Field(foreign_key="message.id")
+    target_group_id: Optional[uuid.UUID] = Field(default=None, foreign_key="contactgroup.id")
+    target_contact_count: int = Field(default=0)
+    queued_contact_count: int = Field(default=0)
+    status: str = Field(default="pending") # e.g., pending, queued, in_progress, completed, failed
+    created_at: datetime = Field(default_factory=datetime.now)
+    completed_at: Optional[datetime] = None
+    initiated_by_user_id: Optional[uuid.UUID] = Field(default=None, foreign_key="user.id")
+
+    message: Optional["Message"] = Relationship(back_populates="outreach_campaigns")
+    group: Optional["ContactGroup"] = Relationship(back_populates="outreach_campaigns")
+
+class User(SQLModel, table=True):
+    id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
+    username: str = Field(index=True, unique=True, nullable=False, max_length=64)
+    email: str = Field(index=True, unique=True, nullable=False, max_length=128)
+    hashed_password: str = Field(nullable=False)
+    disabled: bool = Field(default=False, nullable=False)
 
 class GroupContactLink(SQLModel, table=True):
     """Association table for many-to-many relationship between groups and contacts"""
@@ -12,6 +56,19 @@ class ScheduledMessageContactLink(SQLModel, table=True):
     """Association table for many-to-many relationship between scheduled messages and contacts"""
     scheduled_message_id: uuid.UUID = Field(foreign_key="scheduledmessage.id", primary_key=True)
     contact_id: uuid.UUID = Field(foreign_key="contact.id", primary_key=True)
+
+class RealtimeCall(SQLModel, table=True):
+    """Track realtime AI calls."""
+    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    call_sid: str = Field(index=True)
+    campaign_id: Optional[uuid.UUID] = Field(default=None, foreign_key="outreachcampaign.id")
+    contact_id: Optional[uuid.UUID] = Field(default=None, foreign_key="contact.id")
+    status: str = Field(default="initiated")
+    started_at: datetime = Field(default_factory=datetime.utcnow)
+    ended_at: Optional[datetime] = Field(default=None)
+    duration_seconds: Optional[int] = Field(default=None)
+    call_metadata: Optional[dict] = Field(default=None, sa_column=Column(JSON))
+
 
 class CallRun(SQLModel, table=True):
     """A batch of calls made together as part of a single operation"""
@@ -45,7 +102,8 @@ class ContactGroup(SQLModel, table=True):
         link_model=GroupContactLink,
         sa_relationship_kwargs={"lazy": "selectin"}
     )
-    
+    outreach_campaigns: List["OutreachCampaign"] = Relationship(back_populates="group")
+
 class Contact(SQLModel, table=True):
     id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str
@@ -62,6 +120,7 @@ class Contact(SQLModel, table=True):
         link_model=ScheduledMessageContactLink,
         sa_relationship_kwargs={"lazy": "selectin"}
     )
+    outreach_campaigns: List["OutreachCampaign"] = Relationship(back_populates="message")
 
 class Message(SQLModel, table=True):
     id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -71,7 +130,8 @@ class Message(SQLModel, table=True):
     message_type: str = "voice"  # voice, sms, or both
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
-    
+    outreach_campaigns: List["OutreachCampaign"] = Relationship(back_populates="message")
+
     def __init__(self, **data):
         # Handle string UUIDs by converting to UUID objects
         if 'id' in data and isinstance(data['id'], str):
@@ -157,3 +217,15 @@ class CallLog(SQLModel, table=True):
     scheduled_message_id: Optional[uuid.UUID] = Field(default=None, foreign_key="scheduledmessage.id")
     call_run_id: Optional[uuid.UUID] = Field(default=None, foreign_key="callrun.id")
     call_run: Optional["CallRun"] = Relationship(back_populates="calls")
+
+class BurnMessage(SQLModel, table=True):
+    """Temporary messages that can be viewed once and then deleted"""
+    id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
+    token: str = Field(index=True)  # Unique token for the message URL
+    content: str  # Content of the message
+    created_at: datetime = Field(default_factory=datetime.now)
+    expires_at: datetime  # When the message should expire
+    viewed: bool = False  # Whether the message has been viewed
+    viewed_at: Optional[datetime] = None  # When the message was viewed
+    created_by_contact_id: Optional[uuid.UUID] = Field(default=None, foreign_key="contact.id")
+    sms_log_id: Optional[uuid.UUID] = Field(default=None, foreign_key="smslog.id")

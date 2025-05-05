@@ -3,6 +3,9 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from typing import Sequence, Optional, List
+from app.models import OutboxJob
+from app.utils.safe_call import safe_call
+from sqlmodel import Session
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 from sqlmodel import Session, select
@@ -415,15 +418,25 @@ async def send_custom_sms(
         
         logging.info(f"Custom SMS sending completed for {len(contacts_to_text)} contacts")
 
-def _send_sms(to_number: str, message_content: str) -> str:
-    """Send SMS using Twilio API and return the message SID"""
-    logging.debug(f"Preparing to send SMS to {to_number} with content length: {len(message_content)}")
-    logging.debug(f"Using Twilio account: {settings.TWILIO_ACCOUNT_SID[:4]}...{settings.TWILIO_ACCOUNT_SID[-4:]}")
-    logging.debug(f"Using from number: {settings.TWILIO_FROM_NUMBER}")
-    message = twilio_client.messages.create(
-        to=to_number,
-        from_=settings.TWILIO_FROM_NUMBER,
-        body=message_content
-    )
-    logging.debug(f"Successfully sent SMS, received message SID: {message.sid}")
-    return message.sid
+@safe_call(default=None)
+def _send_sms(to_number: str, message_content: str, session: Session = None) -> str:
+    """Send SMS using Twilio API and return the message SID. On failure, persist OutboxJob for retry."""
+    try:
+        logging.debug(f"Preparing to send SMS to {to_number} with content length: {len(message_content)}")
+        logging.debug(f"Using Twilio account: {settings.TWILIO_ACCOUNT_SID[:4]}...{settings.TWILIO_ACCOUNT_SID[-4:]}")
+        logging.debug(f"Using from number: {settings.TWILIO_FROM_NUMBER}")
+        message = twilio_client.messages.create(
+            to=to_number,
+            from_=settings.TWILIO_FROM_NUMBER,
+            body=message_content
+        )
+        logging.debug(f"Successfully sent SMS, received message SID: {message.sid}")
+        return message.sid
+    except Exception as e:
+        logging.error(f"Failed to send SMS to {to_number}: {e}")
+        if session is not None:
+            job = OutboxJob(service="twilio", payload={"to_number": to_number, "message_content": message_content})
+            session.add(job)
+            session.commit()
+            logging.info(f"Persisted failed Twilio SMS job to OutboxJob: {job.id}")
+        return None

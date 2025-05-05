@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlmodel import Session
 
 from .database import get_session
-from .models.settings import (
+from app.settings import (
     SystemSetting, 
     DtmfSetting, 
     SmsSettings, 
@@ -30,7 +30,7 @@ from .schemas.settings import (
     SecuritySettingsUpdate,
     SettingsGroup
 )
-from .settings import (
+from app.settings import (
     get_dtmf_settings,
     get_sms_settings, 
     get_notification_settings,

@@ -2,7 +2,7 @@ import os
 import logging
 import sqlite3
 from sqlmodel import SQLModel, create_engine, Session
-from .config import get_settings
+from app.config import get_settings
 
 settings = get_settings()
 engine = create_engine(settings.SQLITE_DB, echo=False)
@@ -52,6 +52,10 @@ def create_db_and_tables() -> None:
     
     # Create all tables including new ones
     SQLModel.metadata.create_all(engine)
+    
+    # Verify RealtimeCall table columns - added 2025-05-04
+    add_column_if_not_exists("realtimecall", "metadata", "JSON")
+    add_column_if_not_exists("realtimecall", "duration_seconds", "INTEGER")
 
 def get_session():
     with Session(engine) as session:
