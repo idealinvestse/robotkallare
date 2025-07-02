@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse
 from sqlmodel import Session
 
 from app.database import get_session
-from app.settings import get_settings
+from app.config import get_settings
 from app.realtime.service import RealtimeService
 
 router = APIRouter(prefix="/realtime", tags=["realtime"])

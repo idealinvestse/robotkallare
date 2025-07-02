@@ -17,3 +17,6 @@ psutil>=5.9.0
 numpy>=1.22.0
 sympy>=1.11.0
 openai>=0.27.0
+# JWT and auth dependencies
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4

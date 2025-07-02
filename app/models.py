@@ -24,6 +24,11 @@ class OutboxJob(SQLModel, table=True):
     last_error: Optional[str] = None
     status: OutboxJobStatus = Field(default=OutboxJobStatus.PENDING)
 
+class OutreachCampaignContactLink(SQLModel, table=True):
+    """Association table for many-to-many relationship between outreach campaigns and contacts"""
+    campaign_id: uuid.UUID = Field(foreign_key="outreachcampaign.id", primary_key=True)
+    contact_id: uuid.UUID = Field(foreign_key="contact.id", primary_key=True)
+
 class OutreachCampaign(SQLModel, table=True):
     id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
     name: Optional[str] = Field(default=None)
@@ -39,6 +44,7 @@ class OutreachCampaign(SQLModel, table=True):
 
     message: Optional["Message"] = Relationship(back_populates="outreach_campaigns")
     group: Optional["ContactGroup"] = Relationship(back_populates="outreach_campaigns")
+    contacts: List["Contact"] = Relationship(
 
 class User(SQLModel, table=True):
     id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -98,11 +104,7 @@ class ContactGroup(SQLModel, table=True):
     name: str
     description: Optional[str] = None
     contacts: List["Contact"] = Relationship(
-        back_populates="groups",
-        link_model=GroupContactLink,
-        sa_relationship_kwargs={"lazy": "selectin"}
-    )
-    outreach_campaigns: List["OutreachCampaign"] = Relationship(back_populates="group")
+    outreach_campaigns: List["OutreachCampaign"] = Relationship(back_populates="message", sa_relationship_kwargs={"lazy": "selectin", "primaryjoin": "Message.id == OutreachCampaign.message_id"})
 
 class Contact(SQLModel, table=True):
     id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -111,16 +113,9 @@ class Contact(SQLModel, table=True):
     notes: Optional[str] = None
     phone_numbers: List[PhoneNumber] = Relationship(back_populates="contact")
     groups: List[ContactGroup] = Relationship(
-        back_populates="contacts",
-        link_model=GroupContactLink,
-        sa_relationship_kwargs={"lazy": "selectin"}
-    )
     scheduled_messages: List["ScheduledMessage"] = Relationship(
-        back_populates="recipients",
-        link_model=ScheduledMessageContactLink,
-        sa_relationship_kwargs={"lazy": "selectin"}
-    )
-    outreach_campaigns: List["OutreachCampaign"] = Relationship(back_populates="message")
+    outreach_campaigns: List["OutreachCampaign"] = Relationship(back_populates="contacts", link_model=OutreachCampaignContactLink, sa_relationship_kwargs={"lazy": "selectin"})
+link_model=OutreachCampaignContactLink, sa_relationship_kwargs={"lazy": "selectin"})
 
 class Message(SQLModel, table=True):
     id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -130,7 +125,8 @@ class Message(SQLModel, table=True):
     message_type: str = "voice"  # voice, sms, or both
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
-    outreach_campaigns: List["OutreachCampaign"] = Relationship(back_populates="message")
+    outreach_campaigns: List["OutreachCampaign"] = Relationship(back_populates="message", sa_relationship_kwargs={"lazy": "selectin", "primaryjoin": "Message.id == OutreachCampaign.message_id"})
+sa_relationship_kwargs={"lazy": "selectin", "primaryjoin": "Message.id == OutreachCampaign.message_id"})
 
     def __init__(self, **data):
         # Handle string UUIDs by converting to UUID objects
@@ -174,10 +170,6 @@ class ScheduledMessage(SQLModel, table=True):
     
     # Relationships
     recipients: List[Contact] = Relationship(
-        back_populates="scheduled_messages",
-        link_model=ScheduledMessageContactLink,
-        sa_relationship_kwargs={"lazy": "selectin"}
-    )
 
 class CustomMessageLog(SQLModel, table=True):
     """Log of custom messages (not using templates)"""

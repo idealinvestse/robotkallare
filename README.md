@@ -1,166 +1,144 @@
-# GDial - Emergency Auto-Dialer System
-
-GDial is an automated emergency calling system that allows organizations to quickly reach multiple contacts in emergency situations.
+# GDial - Emergency Auto-Dialer & Notification System
 
 ## Svensk sammanfattning
 
 GDial är ett automatiserat nödsamtalssystem som låter organisationer snabbt nå flera kontakter i krissituationer. Systemet består av:
 - En RESTful API-server byggd med FastAPI.
-- En RabbitMQ-baserad kö för asynkron Text-till-tal (TTS).
-- Skalbara worker-processer (Google TTS & Coqui).
-- Ett webbaserat dashboard för realtidsövervakning.
-
-API:et erbjuder endpoints för:
-- Skapa TTS-jobb (`POST /tts/jobs`)
-- Hämta TTS-jobbstatus (`GET /tts/jobs/{job_id}`)
-- Ladda ner ljudfil (`GET /tts/audio/{job_id}`)
-
-Systemet kan skalas horisontellt genom att starta flera worker-instanser parallellt.
-
-## Features
-
-- **Automated Emergency Calling**: Dial a list of contacts with a single click
-- **Fallback Numbers**: Automatically try alternate numbers if primary contacts don't answer
-- **Real-time Status**: Monitor call status through the dashboard
-- **Contact Management**: Maintain a prioritized list of emergency contacts with phone number validation
-- **Acknowledgment Tracking**: Record responses from call recipients
-- **API-Driven**: RESTful API for integration with other systems
-- **SMS Messaging**: Send SMS messages to contacts and groups
-
-## Dashboard
-
-GDial includes a web dashboard that provides real-time monitoring and control:
-
-- **System Status**: View overall system health and call statistics
-- **Call Logs**: Track all call attempts and responses
-- **Contact Management**: View and manage emergency contacts
-- **Emergency Trigger**: Initiate emergency calls with a single click
-
-## Technical Stack
-
-- **Backend**: Python with FastAPI
-- **Database**: SQLite with SQLModel ORM
-- **Telephony**: Twilio for placing calls
-- **Frontend**: HTML/JavaScript dashboard
-
-## Getting Started
-
-### Prerequisites
-
-- Python 3.8+
-- Twilio account with a phone number
-
-### Installation
-
-1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/gdial.git
-   cd gdial
-   ```
-
-2. Create and activate a virtual environment:
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-4. Configure your environment variables:
-   ```
-   cp .env.example .env
-   # Edit .env with your Twilio credentials
-   ```
-
-5. Start the server:
-   ```
-   ./run.sh
-   ```
-
-6. Access the dashboard at http://localhost:3003
-
-## API Endpoints
-
-- `GET /health` - Check if the system is running
-- `GET /stats` - Get call statistics
-- `GET /contacts` - List all contacts
-- `GET /call-logs` - View call history
-- `POST /trigger-dialer` - Start emergency calls
-- `POST /tts/jobs` - Submit a new TTS job (async)
-- `GET /tts/jobs/{job_id}` - Get status of a TTS job
-- `GET /tts/audio/{job_id}` - Download the generated audio file (when ready)
+- En RabbitMQ-baserad kö för asynkron hantering av Text-till-tal (TTS) och aviseringar.
+- Skalbara worker-processer för hög prestanda.
+- Ett modernt webbaserat dashboard för realtidsövervakning och hantering.
 
 ---
 
-## Text-to-Speech (TTS) - Asynchronous & Scalable
+## 1. Overview
 
-GDial använder en asynkron och skalbar TTS-arkitektur där all TTS-generering sker i separata worker-processer via en jobbkö (RabbitMQ). Detta möjliggör hög prestanda och oberoende skalning av TTS-tjänsten.
+GDial is a comprehensive emergency notification system designed to rapidly contact individuals and groups through voice calls and SMS messages. It is built with a scalable, asynchronous architecture, making it suitable for high-throughput scenarios.
 
-### TTS-arkitektur
+The system is managed via a modern web dashboard and a powerful REST API.
+
+### Key Features
+
+- **Multi-channel Notifications**: Send alerts via voice calls and SMS.
+- **Contact & Group Management**: Organize contacts into groups for targeted mass-notifications.
+- **Advanced TTS**: Asynchronous Text-to-Speech generation using Google Cloud TTS and Coqui-TTS.
+- **Realtime AI Calls**: Initiate interactive calls with a conversational AI assistant.
+- **Campaign Management**: Track outreach campaigns and monitor their status in real-time.
+- **Real-time Monitoring**: A web dashboard provides live updates on system status and call logs.
+- **Secure & Scalable**: Built with modern tools like FastAPI, RabbitMQ, and Docker for security, performance, and scalability.
+- **Burn Messages**: Create self-destructing messages that are deleted after being viewed once.
+
+## 2. Technical Architecture
+
+GDial uses a decoupled architecture to ensure scalability and resilience. The FastAPI application handles API requests, while a RabbitMQ message queue manages background tasks. Dedicated worker processes consume these tasks, handling CPU-intensive operations like TTS generation and sending notifications.
 
 ```mermaid
 flowchart TD
-    subgraph API & Dashboard
-        A[API: /tts/jobs] -->|Lägger till jobb| Q(RabbitMQ: "gdial.tts")
-        B[API: /tts/jobs/{job_id}] -.->|Pollar status| S[Jobbstatus]
-        C[API: /tts/audio/{job_id}] -.->|Hämtar ljud| F[Audiofil]
+    subgraph User Interaction
+        A[Web Dashboard] <--> B[REST API]
+        C[External System] <--> B
     end
-    subgraph TTS Worker(s)
-        Q --> W[Worker: process_tts_job]
-        W -->|Sätter status, sparar fil| S
-        W --> F
+
+    subgraph Backend System
+        B -- Publishes Job --> Q(RabbitMQ Queue)
+        
+        subgraph Workers (Scalable)
+            W1[Outreach Worker] -- Consumes --> Q
+            W2[TTS Worker] -- Consumes --> Q
+        end
+
+        W1 -- Makes Calls/SMS --> T[Twilio API]
+        W2 -- Generates Audio --> S[File Storage]
+        B -- Serves Audio --> A
     end
+
+    T -- Sends Webhooks --> B
 ```
 
-- **API**: Tar emot TTS-förfrågningar och placerar dem i kön.
-- **TTS Worker(s)**: Plockar upp jobb, genererar ljud (Google eller Coqui), uppdaterar status och sparar ljudfil.
-- **Klient**: Pollar status och hämtar ljudfil när jobbet är klart.
+## 3. Getting Started
 
-### TTS API-användning
+The recommended way to run GDial is using Docker.
 
-1. **Skapa ett TTS-jobb**
-   ```http
-   POST /tts/jobs
-   Content-Type: application/json
-   {
-     "text": "Meddelande att läsa upp",
-     "voice": "google", // eller "coqui"
-     "output_format": "mp3" // eller "wav"
-   }
-   ```
-   Svar:
-   ```json
-   { "job_id": "...", "status": "queued" }
-   ```
+### Prerequisites
 
-2. **Hämta jobbstatus**
-   ```http
-   GET /tts/jobs/{job_id}
-   ```
-   Svar:
-   ```json
-   { "job_id": "...", "status": "queued|processing|done|failed" }
-   ```
+- Docker and Docker Compose
+- Twilio Account with a phone number
+- Git
 
-3. **Hämta ljudfil**
-   ```http
-   GET /tts/audio/{job_id}
-   ```
-   Svar: MP3/WAV-fil (HTTP 200) eller 404 om ej klar
+### Docker Installation
 
-### Skala TTS parallellt
-- Starta flera instanser av TTS-workern för att parallellisera ljudgenerering.
-- API och worker är helt separata processer och kan köras på olika servrar.
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository_url>
+    cd gdial
+    ```
 
----
+2.  **Create an environment file:**
+    Copy the example `.env` file and fill in your credentials, especially for Twilio.
+    ```bash
+    cp .env.example .env
+    # Edit .env with your details
+    # NANO .env
+    ```
+    **Key variables:**
+    - `TWILIO_ACCOUNT_SID`: Your Twilio Account SID.
+    - `TWILIO_AUTH_TOKEN`: Your Twilio Auth Token.
+    - `TWILIO_FROM_NUMBER`: Your Twilio phone number.
+    - `PUBLIC_URL`: The public-facing URL of your server (for Twilio webhooks). Use a tool like `ngrok` for local development.
 
-## License
+3.  **Build and start the services:**
+    ```bash
+    docker-compose up --build
+    ```
 
-[MIT License](LICENSE)
+4.  **Access the application:**
+    -   **Web Dashboard**: `http://localhost:8080` (or the `FRONTEND_PORT` you defined).
+    -   **API Server**: `http://localhost:3003` (or the `API_PORT` you defined).
+    -   **API Docs**: `http://localhost:3003/docs`.
 
-## Acknowledgments
+## 4. Configuration
 
-- Thanks to Twilio for their excellent communication APIs
+System behavior can be configured via environment variables in the `.env` file.
+
+-   `API_PORT`: Port for the backend API server.
+-   `FRONTEND_PORT`: Port for the web dashboard.
+-   `LOG_LEVEL`: Logging level (e.g., `DEBUG`, `INFO`).
+-   `CALL_TIMEOUT_SEC`: Timeout for voice calls.
+-   `OPENAI_API_KEY`: Required for the "Realtime AI" call mode.
+
+## 5. Usage
+
+### Sending a Notification
+
+The primary way to send a notification is through the `/outreach` API endpoint.
+
+**Example Request:**
+```bash
+curl -X POST http://localhost:3003/outreach/ \
+-H "Content-Type: application/json" \
+-d '{
+  "campaign_name": "Test Campaign",
+  "message_id": "your-message-template-uuid",
+  "group_id": "your-target-group-uuid",
+  "call_mode": "tts"
+}'
+```
+
+**Call Modes:**
+-   `tts`: (Default) Synthesizes speech from the message content. Requires a `message_id`.
+-   `realtime_ai`: Connects the call to a conversational AI. `message_id` is not required.
+
+### Project Structure
+
+-   `app/`: Main directory for the FastAPI backend source code.
+    -   `api/`: Contains API endpoint routers.
+    -   `services/`: Houses the core business logic.
+    -   `repositories/`: Handles database interactions.
+    -   `workers/`: Logic for the RabbitMQ background workers.
+    -   `models.py`: SQLModel database models.
+    -   `schemas.py`: Pydantic data validation schemas.
+    -   `main.py`: FastAPI application entrypoint.
+-   `frontend_new/`: Source code for the React-based web dashboard.
+-   `static/`: Legacy HTML/JS files.
+-   `docker-compose.yml`: Defines the services for Docker.
+-   `Dockerfile`: Instructions for building the backend Docker image.
+-   `Dockerfile.frontend`: Instructions for building the frontend Docker image.

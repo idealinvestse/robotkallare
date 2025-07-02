@@ -10,7 +10,7 @@ from ..services.outreach_service import OutreachService
 from ..models import OutreachCampaign # For the response model
 from ..schemas import OutreachCampaignResponse # Assuming a response schema exists or define one
 from ..logger import logger
-from ..api import QueuePublisher
+from app.publisher import QueuePublisher
 from datetime import datetime
 # from ..api.auth import get_current_active_user # If auth is needed
 # from ..models import User # If using auth
