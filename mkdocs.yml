@@ -1,0 +1,19 @@
+site_name: GDial Documentation
+nav:
+  - Home: index.md
+  - Project Overview: README.md
+  - Development Guidelines: GDial_Development_Info.md
+  - RabbitMQ Setup: README_RABBITMQ.md
+  - Docker Setup: docker-README.md
+  - CLI Reference: docker-cli-README.md
+  - Frontend:
+      - Main Frontend: frontend/README.md
+      - Legacy Frontend: frontend/frontend_new_README.md
+  - API: api/index.md
+  - Implementation Plans:
+      - RabbitMQ Worker: implementation_plan_rabbitmq_worker.md
+      - Swedish TTS: implementation_plan_swedish_tts.md
+      - Settings: settings_implementation_plan.md
+  - Summaries:
+      - Implementation Summary: implementation_summary.md
+      - Settings Summary: settings_implementation_summary.md
