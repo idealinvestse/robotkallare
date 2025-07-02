@@ -1,4 +1,220 @@
-# Cleanup additions
+# Gitignore file for Gdial project
+# =================================
+# This file contains rules for ignoring files that should not be in version control.
+# It covers Python, Node.js (for the frontend), and project-specific files.
+
+# --- Python ---
+
+# Virtual environments
+/env/
+/venv/
+/venv_test/
+/gdial_venv/
+/.venv
+/.venv_openapi
+/virtualenv/
+/ENV/
+/env.bak/
+/venv.bak/
+/oi-env/
+/__pypackages__/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+/.Python
+/build/
+/dist/
+/downloads/
+/eggs/
+/.eggs/
+/lib/
+/lib64/
+/parts/
+/sdist/
+/var/
+/wheels/
+/*.egg-info/
+/.installed.cfg
+/*.egg
+/MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+/htmlcov/
+/.tox/
+/.nox/
+/.coverage
+/.coverage.*
+/.cache
+/nosetests.xml
+/coverage.xml
+/*.cover
+/.hypothesis/
+/.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+local_settings.py
+
+# Flask stuff:
+/instance/
+/.webassets-cache
+
+# Scrapy stuff:
+/.scrapy
+
+# Sphinx documentation
+/docs/_build/
+
+# PyBuilder
+/target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+/profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site/
+
+# mypy
+/.mypy_cache/
+/.dmypy.json
+dmypy.json
+
+# Pyre type checker
+/.pyre/
+
+# pytype static checker
+/.pytype/
+
+# Cython debug symbols
+/cython_debug/
+
+# Pyright
+/.pyright_cache
+
+
+# --- Node.js / Frontend ---
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+/node_modules/
+/jspm_packages/
+/bower_components/
+
+# Build output
+/build/
+/dist/
+/.next/
+/out/
+/.nuxt/
+/.svelte-kit/
+/.docusaurus/
+/.vuepress/dist/
+/public # Often a build artifact for frameworks like Gatsby
+
+# Cache directories
+/.cache/
+/.parcel-cache/
+/.npm/
+/.eslintcache
+/.stylelintcache
+/.yarn/cache
+/.yarn/unplugged
+.pnp.*
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Other
+.yarn/build-state.yml
+.yarn/install-state.json
+*.tgz
+
+# --- Project-Specific ---
+
+# Environment variables
+# IMPORTANT: DO NOT COMMIT .env files. Use .env.example as a template.
+.env
+.env.*.local
+.env.local
+
+# IDE / Editor specific
+/.vscode/
+/.idea/
+*.swp
+*~
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+dialer.db.backup
+
+# Logs
+*.log
+/logs/
+server.pid
+install_log.txt
+
+# Generated files
+/apidocs/
+codebase_overview.txt
+user_codebase_files.txt
+suggestion.txt
+
 # Virtual environments
 env/
 venv/
