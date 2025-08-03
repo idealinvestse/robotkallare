@@ -40,5 +40,6 @@ async def test_wait_for_answer_no_answer(session: Session):
     session.commit()
     answered = await _wait_for_answer(session, sid)
     assert answered is False
-    cl = session.exec(CallLog.where(CallLog.call_sid == sid)).first()
+    from sqlmodel import select
+    cl = session.exec(select(CallLog).where(CallLog.call_sid == sid)).first()
     assert cl.status == "initiated"  # Will be updated to no-answer in dialer

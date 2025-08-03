@@ -56,7 +56,7 @@ def generate_audio_openai(text, output_format="mp3", file_id=None, voice=None):
             model=OPENAI_TTS_MODEL,
             voice=voice or "alloy",
             input=text,
-            format=output_format.lower()
+            response_format=output_format.lower()
         )
         audio_bytes = response.content if hasattr(response, "content") else getattr(response, "audio", None)
         if not audio_bytes:

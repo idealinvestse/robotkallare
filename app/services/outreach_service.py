@@ -52,14 +52,14 @@ class OutreachService:
 
         # --- 1. Validation ---
         if not (bool(group_id) ^ bool(contact_ids)):
-            raise ValueError("Must provide exactly one of group_id or contact_ids")
+            raise ValueError("Either group_id or contact_ids must be provided")
 
         # Message validation depends on call mode
         message = None
         if call_mode != "realtime_ai":
             # Non-realtime modes require a valid message
             if not message_id:
-                raise ValueError("message_id is required for non-realtime call modes")
+                raise ValueError("message_id is required unless call_mode is realtime_ai")
                 
             message = self.message_repo.get_message_by_id(message_id)
             if not message:
@@ -69,13 +69,12 @@ class OutreachService:
         contacts_to_reach: List[Contact] = []
         target_group: Optional[ContactGroup] = None
         if group_id:
-            target_group = self.group_repo.get_group_by_id_with_contacts(group_id)
-            if not target_group:
-                raise ValueError(f"Group with ID {group_id} not found")
-            contacts_to_reach = target_group.contacts
-            logger.info(f"Targeting group '{target_group.name}' ({group_id}) with {len(contacts_to_reach)} contacts.")
+            contacts_to_reach = self.group_repo.get_contacts_by_group_id(group_id)
+            if not contacts_to_reach:
+                raise ValueError(f"Group with ID {group_id} not found or has no contacts")
+            logger.info(f"Targeting group with ID {group_id} with {len(contacts_to_reach)} contacts.")
         elif contact_ids:
-            contacts_to_reach = self.contact_repo.get_contacts_by_ids_with_phones(contact_ids)
+            contacts_to_reach = self.contact_repo.get_contacts_by_ids(contact_ids)
             if len(contacts_to_reach) != len(contact_ids):
                 # Handle partial matches if necessary, for now require all contacts found
                 found_ids = {c.id for c in contacts_to_reach}

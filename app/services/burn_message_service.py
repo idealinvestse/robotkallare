@@ -104,6 +104,14 @@ class BurnMessageService:
             # Check if message has expired
             if message.expires_at < datetime.now():
                 logger.warning(f"Burn message with token {token} has expired")
+                # Delete expired message
+                try:
+                    self.session.delete(message)
+                    self.session.commit()
+                    logger.info(f"Deleted expired burn message with token {token}")
+                except Exception as e:
+                    logger.error(f"Failed to delete expired burn message {token}: {str(e)}", exc_info=True)
+                    self.session.rollback()
                 return None
                 
             # Check if message has already been viewed

@@ -113,7 +113,7 @@ def text_to_audio(message_text, voice=None, file_id=None, voice_pitch=0, voice_s
         # OpenAI backend
         if voice == "openai":
             from app.tts.openai import generate_audio_openai
-            return generate_audio_openai(text=message_text, output_format="mp3", file_id=file_id, voice=voice)
+            return generate_audio_openai(text=message_text, output_format="mp3", file_id=file_id)
         # Fallback to Coqui
         return generate_audio_coqui(text=message_text, file_id=file_id, voice_pitch=voice_pitch, voice_speed=voice_speed)
     except Exception as e:

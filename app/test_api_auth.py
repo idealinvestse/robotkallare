@@ -8,7 +8,7 @@ dotenv.load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 from app.models import User
 from app.database import get_session
-from app.api import app
+from app.main import app
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

@@ -154,7 +154,198 @@ async def test_initialize_session_directly(service):
     assert "text" in sent_data["session"]["modalities"]
     assert "audio" in sent_data["session"]["modalities"]
 
-# These tests are complex to implement correctly and would require
-# extensive mocking of internal implementation details.
-# Since we're focusing on testing the public API, we'll omit them for now.
+@pytest.mark.asyncio
+async def test_log_call_start(service, mock_session):
+    """Test logging the start of a realtime call."""
+    from uuid import UUID
+    from app.models import RealtimeCall
+    
+    # Mock the database operations
+    mock_realtime_call = MagicMock(spec=RealtimeCall)
+    mock_realtime_call.id = UUID('12345678-1234-5678-1234-567812345678')
+    mock_session.add = MagicMock()
+    mock_session.commit = MagicMock()
+    mock_session.refresh = MagicMock()
+    
+    # Create a service instance with the mock session
+    service_with_mock = RealtimeService(mock_session)
+    
+    # Call the method
+    call_sid = "CA1234567890abcdef1234567890abcdef"
+    result = await service_with_mock.log_call_start(call_sid)
+    
+    # Verify database operations
+    mock_session.add.assert_called_once()
+    mock_session.commit.assert_called_once()
+    mock_session.refresh.assert_called_once()
+    
+    # Verify the result is a UUID
+    assert isinstance(result, UUID)
+
+@pytest.mark.asyncio
+async def test_log_call_start_with_metadata(service, mock_session):
+    """Test logging the start of a realtime call with metadata."""
+    from uuid import UUID
+    from app.models import RealtimeCall
+    
+    # Mock the database operations
+    mock_realtime_call = MagicMock(spec=RealtimeCall)
+    mock_realtime_call.id = UUID('12345678-1234-5678-1234-567812345678')
+    mock_session.add = MagicMock()
+    mock_session.commit = MagicMock()
+    mock_session.refresh = MagicMock()
+    
+    # Create a service instance with the mock session
+    service_with_mock = RealtimeService(mock_session)
+    
+    # Call the method with metadata
+    call_sid = "CA1234567890abcdef1234567890abcdef"
+    meta_str = '{"campaign_id": "123e4567-e89b-12d3-a456-426614174000", "contact_id": "123e4567-e89b-12d3-a456-426614174001"}'
+    result = await service_with_mock.log_call_start(call_sid, meta_str)
+    
+    # Verify database operations
+    mock_session.add.assert_called_once()
+    mock_session.commit.assert_called_once()
+    mock_session.refresh.assert_called_once()
+    
+    # Verify the result is a UUID
+    assert isinstance(result, UUID)
+
+@pytest.mark.asyncio
+async def test_update_call_status_success(service, mock_session):
+    """Test successfully updating the status of a realtime call."""
+    from app.models import RealtimeCall
+    from app.realtime.schemas import RealtimeCallStatus
+    from sqlmodel import select
+    
+    # Mock the database query result
+    mock_call = MagicMock(spec=RealtimeCall)
+    mock_call.status = None
+    mock_call.started_at = None
+    mock_session.exec.return_value.first.return_value = mock_call
+    mock_session.commit = MagicMock()
+    
+    # Create a service instance with the mock session
+    service_with_mock = RealtimeService(mock_session)
+    
+    # Call the method
+    call_sid = "CA1234567890abcdef1234567890abcdef"
+    status = RealtimeCallStatus.CONNECTED
+    result = await service_with_mock.update_call_status(call_sid, status)
+    
+    # Verify database operations
+    mock_session.exec.return_value.first.assert_called_once()
+    mock_session.commit.assert_called_once()
+    
+    # Verify the result
+    assert result is True
+    assert mock_call.status == status.value
+
+@pytest.mark.asyncio
+async def test_update_call_status_not_found(service, mock_session):
+    """Test updating the status of a realtime call that doesn't exist."""
+    from app.realtime.schemas import RealtimeCallStatus
+    from sqlmodel import select
+    
+    # Mock the database query result to return None
+    mock_session.exec.return_value.first.return_value = None
+    mock_session.commit = MagicMock()
+    
+    # Create a service instance with the mock session
+    service_with_mock = RealtimeService(mock_session)
+    
+    # Call the method
+    call_sid = "CA1234567890abcdef1234567890abcdef"
+    status = RealtimeCallStatus.CONNECTED
+    result = await service_with_mock.update_call_status(call_sid, status)
+    
+    # Verify database operations
+    mock_session.exec.return_value.first.assert_called_once()
+    mock_session.commit.assert_not_called()
+    
+    # Verify the result
+    assert result is False
+
+@pytest.mark.asyncio
+async def test_update_call_status_completed(service, mock_session):
+    """Test updating the status of a realtime call to completed."""
+    from datetime import datetime, timedelta
+    from app.models import RealtimeCall
+    from app.realtime.schemas import RealtimeCallStatus
+    from sqlmodel import select
+    
+    # Mock the database query result
+    mock_call = MagicMock(spec=RealtimeCall)
+    mock_call.status = None
+    mock_call.started_at = datetime.utcnow() - timedelta(seconds=30)
+    mock_session.exec.return_value.first.return_value = mock_call
+    mock_session.commit = MagicMock()
+    
+    # Create a service instance with the mock session
+    service_with_mock = RealtimeService(mock_session)
+    
+    # Call the method
+    call_sid = "CA1234567890abcdef1234567890abcdef"
+    status = RealtimeCallStatus.COMPLETED
+    result = await service_with_mock.update_call_status(call_sid, status)
+    
+    # Verify database operations
+    mock_session.exec.return_value.first.assert_called_once()
+    mock_session.commit.assert_called_once()
+    
+    # Verify the result and that duration was calculated
+    assert result is True
+    assert mock_call.status == status.value
+    assert mock_call.ended_at is not None
+    assert mock_call.duration_seconds is not None
+
+@pytest.mark.asyncio
+async def test_send_initial_prompt_with_custom_prompt(service):
+    """Test sending a custom initial prompt to OpenAI."""
+    # Mock WebSocket connection
+    mock_ws = AsyncMock()
+    
+    # Call the method with a custom prompt
+    custom_prompt = "Hello, this is a custom prompt for testing."
+    await service.send_initial_prompt(mock_ws, custom_prompt)
+    
+    # Verify that two messages were sent
+    assert mock_ws.send.call_count == 2
+    
+    # Check the first message (conversation item creation)
+    first_call_args = mock_ws.send.call_args_list[0][0][0]
+    first_message = json.loads(first_call_args)
+    assert first_message["type"] == "conversation.item.create"
+    assert first_message["item"]["type"] == "message"
+    assert first_message["item"]["role"] == "user"
+    assert custom_prompt in first_call_args
+    
+    # Check the second message (response creation)
+    second_call_args = mock_ws.send.call_args_list[1][0][0]
+    second_message = json.loads(second_call_args)
+    assert second_message["type"] == "response.create"
+
+@pytest.mark.asyncio
+async def test_send_initial_prompt_with_default_prompt(service):
+    """Test sending the default initial prompt to OpenAI."""
+    # Mock WebSocket connection
+    mock_ws = AsyncMock()
+    
+    # Call the method without a prompt (should use default)
+    await service.send_initial_prompt(mock_ws)
+    
+    # Verify that two messages were sent
+    assert mock_ws.send.call_count == 2
+    
+    # Check the first message (conversation item creation)
+    first_call_args = mock_ws.send.call_args_list[0][0][0]
+    first_message = json.loads(first_call_args)
+    assert first_message["type"] == "conversation.item.create"
+    assert first_message["item"]["type"] == "message"
+    assert first_message["item"]["role"] == "user"
+    
+    # Check the second message (response creation)
+    second_call_args = mock_ws.send.call_args_list[1][0][0]
+    second_message = json.loads(second_call_args)
+    assert second_message["type"] == "response.create"
 

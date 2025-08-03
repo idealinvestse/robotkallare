@@ -44,8 +44,7 @@ class OutreachCampaign(SQLModel, table=True):
 
     message: Optional["Message"] = Relationship(back_populates="outreach_campaigns")
     group: Optional["ContactGroup"] = Relationship(back_populates="outreach_campaigns")
-    # TODO: define contacts relationship properly later
-    # contacts: List["Contact"] = Relationship(
+    contacts: List["Contact"] = Relationship(back_populates="outreach_campaigns", link_model=OutreachCampaignContactLink, sa_relationship_kwargs={"lazy": "selectin"})
 
 class User(SQLModel, table=True):
     id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -106,7 +105,7 @@ class ContactGroup(SQLModel, table=True):
     description: Optional[str] = None
     # TODO: define contacts relationship properly later
     # contacts: List["Contact"] = Relationship(
-    outreach_campaigns: List["OutreachCampaign"] = Relationship(back_populates="message", sa_relationship_kwargs={"lazy": "selectin", "primaryjoin": "Message.id == OutreachCampaign.message_id"})
+    outreach_campaigns: List["OutreachCampaign"] = Relationship(back_populates="group", sa_relationship_kwargs={"lazy": "selectin"})
 
 class Contact(SQLModel, table=True):
     id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)

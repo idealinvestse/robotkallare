@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from app.api import app
+from app.main import app
 import uuid
 from datetime import datetime
 from app.models import Message
