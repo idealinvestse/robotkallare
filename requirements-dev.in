@@ -1,5 +1,0 @@
--c requirements.txt
-
-pytest
-pytest-asyncio
-coverage
