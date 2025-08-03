@@ -1,27 +1,32 @@
-# GDial - Emergency Notification System
+# GDial - Emergency Notification & Messaging Platform
 
-This documentation provides instructions for setting up, running, and managing the GDial emergency notification system.
+Denna dokumentation ger instruktioner för att sätta upp, köra och hantera GDial emergency notification system.
 
-## Table of Contents
+## Innehållsförteckning
 
-1. [Overview](#overview)
+1. [Översikt](#översikt)
 2. [Installation](#installation)
-3. [Starting the Server](#starting-the-server)
-4. [Configuration](#configuration)
-5. [Usage Guide](#usage-guide)
-6. [API Documentation](#api-documentation)
-7. [Troubleshooting](#troubleshooting)
+3. [Starta systemet](#starta-systemet)
+4. [Konfiguration](#konfiguration)
+5. [Användningsguide](#användningsguide)
+6. [API-dokumentation](#api-dokumentation)
+7. [Felsökning](#felsökning)
+8. [Utveckling](#utveckling)
 
-## Overview
+## Översikt
 
-GDial is an emergency notification system designed to reach contacts through voice calls and SMS messages. The system supports both emergency and normal notifications with configurable delivery methods and response handling.
+GDial är en omfattande plattform för nödkommunikation och massutskick som möjliggör snabb kontakt med individer och grupper via röstsamtal och SMS-meddelanden. Systemet är byggt med en modern, skalbar arkitektur som hanterar scenarier med hög genomströmning.
 
-Key features:
-- Voice call notifications with DTMF response handling
-- SMS notifications with configurable content
-- Group management for organizing contacts
-- Manual handling for failed notification attempts
-- Extensive configuration options for customizing behavior
+### Huvudfunktioner
+- **Multi-kanal kommunikation**: SMS och röstsamtal via Twilio
+- **Kontakt- och grupphantering**: Organisera kontakter i grupper för riktade utskick
+- **Avancerad TTS**: Text-till-tal med Google Cloud TTS och svenska röster
+- **AI-assisterade samtal**: Interaktiva konversationer med AI
+- **Realtidsövervakning**: Live-dashboard för kampanjstatus och samtalsloggar
+- **Burn Messages**: Självförstörande meddelanden som raderas efter visning
+- **Schemaläggning**: Framtida utskick och automatiska återförsök
+- **RabbitMQ Integration**: Asynkron bearbetning för hög prestanda
+- **Modern webbgränssnitt**: React-baserat dashboard med realtidsuppdateringar
 
 ## Installation
 
@@ -241,4 +246,244 @@ Use the following command to view logs in real-time:
 tail -f gdial.log
 ```
 
-For additional help, please contact the system administrator.
+För ytterligare hjälp, kontakta systemadministratören.
+
+## Utveckling
+
+### Utvecklingsmiljö
+
+#### Snabb uppstart med launch script
+```bash
+# Automatisk setup och start (rekommenderat för första gången)
+./launch-gdial-backend.sh
+
+# Scriptet kommer att:
+# - Skapa virtuell miljö (gdial_venv)
+# - Installera alla beroenden
+# - Detektera GPU för CUDA-stöd
+# - Ladda ner svenska TTS-modeller
+# - Starta applikationen
+```
+
+**GPU-acceleration**: Om du har NVIDIA GPU kommer scriptet automatiskt installera CUDA-stöd för förbättrad TTS-prestanda.
+
+#### Backend-utveckling
+```bash
+# Aktivera virtuell miljö
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Installera utvecklingsberoenden
+pip install -r requirements-dev.txt
+
+# Starta med hot reload
+uvicorn app.main:app --reload --port 3003
+```
+
+#### Frontend-utveckling
+```bash
+# Navigera till frontend-katalogen
+cd frontend_new
+
+# Installera beroenden
+npm install
+
+# Starta utvecklingsserver
+npm run dev
+```
+
+### Docker-utveckling
+
+#### Bygg och kör med Docker Compose
+```bash
+# Bygg alla tjänster
+docker-compose build
+
+# Starta alla tjänster
+docker-compose up -d
+
+# Visa loggar
+docker-compose logs -f
+
+# Stoppa tjänster
+docker-compose down
+```
+
+#### Individuella Docker-kommandon
+```bash
+# Bygg backend
+docker build -t gdial-backend .
+
+# Bygg frontend
+docker build -f Dockerfile.frontend -t gdial-frontend .
+
+# Kör backend
+docker run -p 3003:3003 gdial-backend
+```
+
+### Testing
+
+#### Backend-tester
+```bash
+# Kör alla tester
+pytest
+
+# Kör med coverage
+pytest --cov=app
+
+# Kör specifika tester
+pytest tests/test_outreach_service.py
+```
+
+#### Frontend-tester
+```bash
+cd frontend_new
+
+# Kör enhetstester
+npm test
+
+# Kör med coverage
+npm run test:coverage
+
+# Kör i watch-läge
+npm run test:watch
+```
+
+### Kodkvalitet
+
+#### Backend linting och formatering
+```bash
+# Formatera kod med black
+black app/
+
+# Sortera imports
+isort app/
+
+# Kör linting
+flake8 app/
+```
+
+#### Frontend linting
+```bash
+cd frontend_new
+
+# Kör ESLint
+npm run lint
+
+# Fixa automatiska problem
+npm run lint:fix
+```
+
+### Databashantering
+
+#### Migrationer
+```bash
+# Kör databasmigrationer
+python migrate_db.py
+
+# Återställ databas
+rm dialer.db
+python app/seed_db.py
+```
+
+#### Backup och återställning
+```bash
+# Backup av databas
+cp dialer.db dialer_backup_$(date +%Y%m%d).db
+
+# Återställ från backup
+cp dialer_backup_20250103.db dialer.db
+```
+
+### RabbitMQ-utveckling
+
+#### Lokal RabbitMQ med Docker
+```bash
+# Starta RabbitMQ
+docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+
+# Åtkomst till management UI
+# http://localhost:15672 (guest/guest)
+```
+
+#### Worker-utveckling
+```bash
+# Starta outreach worker
+python -m app.workers.outreach_worker
+
+# Starta TTS worker
+python -m app.workers.tts_worker
+```
+
+### API-utveckling
+
+#### OpenAPI-dokumentation
+```bash
+# Generera OpenAPI-specifikation
+python export_openapi.py
+
+# Åtkomst till interaktiv dokumentation
+# http://localhost:3003/docs (Swagger UI)
+# http://localhost:3003/redoc (ReDoc)
+```
+
+#### API-testning
+```bash
+# Testa med curl
+curl -X POST http://localhost:3003/api/trigger-sms \
+  -H "Content-Type: application/json" \
+  -d '{"message_content": "Test", "contact_ids": [1]}'
+
+# Använd HTTPie för enklare testning
+http POST localhost:3003/api/trigger-sms message_content="Test" contact_ids:='[1]'
+```
+
+### Prestanda och övervakning
+
+#### Loggning
+```bash
+# Visa realtidsloggar
+tail -f gdial.log
+
+# Filtrera efter nivå
+grep "ERROR" gdial.log
+
+# Visa worker-loggar
+tail -f logs/outreach_worker.log
+```
+
+#### Prestandaövervakning
+```bash
+# Övervaka systemresurser
+top -p $(pgrep -f "uvicorn")
+
+# Övervaka databasstorlek
+ls -lh dialer.db
+
+# Kontrollera RabbitMQ-köer
+rabbitmqctl list_queues
+```
+
+### Deployment
+
+#### Produktionsdistribution
+```bash
+# Bygg för produktion
+docker-compose -f docker-compose.prod.yml build
+
+# Deploy med minimal downtime
+docker-compose -f docker-compose.prod.yml up -d --no-deps --build backend
+```
+
+#### Miljöhantering
+```bash
+# Kopiera miljövariabler
+cp .env.example .env.prod
+
+# Redigera produktionsinställningar
+nano .env.prod
+```
+
+För ytterligare utvecklingsinformation, se:
+- [Kodningsriktlinjer](code-guidelines.md)
+- [Projektöversikt](PROJECT_OVERVIEW.md)
+- [Utvecklingsguide](GDial_Development_Info.md)

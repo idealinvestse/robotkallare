@@ -1,39 +1,59 @@
 # GDial Documentation Hub
 
-Welcome to the central documentation hub for the GDial project. This index provides an organized overview of all available documentation.
+Välkommen till den centrala dokumentationshubben för GDial-projektet. Detta index ger en organiserad översikt av all tillgänglig dokumentation.
 
-## Core Documentation
+## 📋 Huvuddokumentation
 
-- [Project Overview](/docs/README.md)
-- [Development Guidelines](/docs/GDial_Development_Info.md)
-- [RabbitMQ Setup](/docs/README_RABBITMQ.md)
+- **[Projektöversikt](PROJECT_OVERVIEW.md)** - Omfattande systemöversikt och arkitektur
+- **[Kodningsriktlinjer](code-guidelines.md)** - Utvecklingsstandards för AI-agenter
+- **[Huvuddokumentation](DOCUMENTATION.md)** - Installation, konfiguration och utveckling
 
-## Feature Documentation
+## 🚀 Snabbstart
 
-- [Group Messenger Feature](/docs/group_messenger_feature.md)
-- [Swedish TTS Implementation](/docs/swedish_tts_implementation.md)
+- **[Docker Setup](docker-README.md)** - Container-baserad deployment
+- **[Docker CLI](docker-cli-README.md)** - Kommandoradsreferens
 
-## System Documentation
+## 🏗️ Systemkomponenter
 
-- [Docker Setup](/docs/docker-README.md)
-- [CLI Reference](/docs/docker-cli-README.md)
+### Backend
+- **[RabbitMQ Setup](README_RABBITMQ.md)** - Meddelandekö konfiguration
+- **[API Dokumentation](api/)** - REST API referens
+- **[OpenAPI Spec](openapi.json)** - Automatiskt genererad API-specifikation
 
-## Frontend
+### Frontend
+- **[Frontend Dokumentation](frontend/)** - React-applikation
 
-- [Main Frontend](/docs/frontend/README.md)
-- [Legacy Frontend](/docs/frontend/frontend_new_README.md)
+## 🎯 Funktioner
 
-## API
+- **[Group Messenger](group_messenger_feature.md)** - Gruppmeddelanden funktionalitet
+- **[Swedish TTS Implementation](swedish_tts_implementation.md)** - Text-till-tal på svenska
+- **[Swedish TTS Options](swedish_tts_options.md)** - TTS-alternativ och konfiguration
 
-- [API Documentation](/docs/api/)
+## 📋 Implementationsplaner
 
-## Implementation Plans
+- **[RabbitMQ Worker Plan](implementation_plan_rabbitmq_worker.md)** - Worker-arkitektur
+- **[Swedish TTS Plan](implementation_plan_swedish_tts.md)** - TTS-implementering
+- **[Settings Implementation Plan](settings_implementation_plan.md)** - Inställningssystem
 
-- [RabbitMQ Worker](/docs/implementation_plan_rabbitmq_worker.md)
-- [Swedish TTS](/docs/implementation_plan_swedish_tts.md)
-- [Settings Implementation](/docs/settings_implementation_plan.md)
+## 🔍 Navigering
 
-## Summaries
+### För utvecklare
+1. Börja med [Projektöversikt](PROJECT_OVERVIEW.md)
+2. Läs [Kodningsriktlinjer](code-guidelines.md)
+3. Följ utvecklingsinstruktioner i [Huvuddokumentation](DOCUMENTATION.md)
 
-- [Implementation Summary](/docs/implementation_summary.md)
-- [Settings Implementation Summary](/docs/settings_implementation_summary.md)
+### För deployment
+1. Se [Docker Setup](docker-README.md)
+2. Konfigurera enligt [Huvuddokumentation](DOCUMENTATION.md)
+3. Använd automatiska launch scripts (beskrivs i huvuddokumentationen)
+
+### För API-användning
+1. Granska [API Dokumentation](api/)
+2. Se [OpenAPI Spec](openapi.json) för detaljer
+3. Testa med exempel från dokumentationen
+
+---
+
+**Senast uppdaterad:** 2025-01-03  
+**Version:** 2.0  
+**Dokumentationsstandard:** AI Windsurf kompatibel
