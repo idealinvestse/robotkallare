@@ -1,11 +1,14 @@
-# Implementation Plan: Swedish TTS in GDial
+# 📋 Historisk implementationsplan: Swedish Text-to-Speech Integration
 
-This document outlines the implementation plan for integrating a local Swedish Text-to-Speech (TTS) system using Facebook's MMS-TTS-SWE VITS model rather than relying on Twilio's TTS capabilities.
+> **⚠️ HISTORISK DOKUMENTATION**  
+> Detta dokument bevaras för historisk referens. Svenska TTS-funktioner har redan implementerats i systemet. Se [swedish_tts_implementation.md](swedish_tts_implementation.md) och [swedish_tts_options.md](swedish_tts_options.md) för aktuell konfiguration.
 
-## 1. Overview
+## Översikt
+Detta dokument beskriver den ursprungliga planen för att integrera svenska text-till-tal (TTS) funktioner i GDial-systemet. Målet var att tillhandahålla högkvalitativ svensk röstsyntes för automatiserade samtal och meddelanden.
 
-Currently, GDial uses Twilio's TTS service through the `VoiceResponse.say()` method in the TwiML response. We'll enhance this by:
+## 1. Översikt
 
+För närvarande använder GDial Twilios TTS-tjänst via `VoiceResponse.say()`-metoden i TwiML-svaret. Vi kommer att förbättra detta genom:
 1. Generating high-quality Swedish audio locally using MMS-TTS-SWE
 2. Serving these audio files to Twilio
 3. Using Twilio's `<Play>` TwiML verb to deliver the audio during calls

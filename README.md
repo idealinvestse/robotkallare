@@ -19,14 +19,14 @@ GDial är en omfattande plattform för nödkommunikation och massutskick som mö
 git clone https://github.com/yourusername/gdial.git
 cd gdial
 
-# Starta med Docker Compose
-docker-compose up -d
-
-# Eller kör lokalt
+# Automatisk setup och start (rekommenderat)
 ./launch-gdial-backend.sh
+
+# Eller med Docker Compose
+docker-compose up -d
 ```
 
-Öppna [http://localhost:3003](http://localhost:3003) för att komma åt webbgränssnittet.
+**Webbgränssnitt:** [http://localhost:3003](http://localhost:3003)
 
 ## ✨ Huvudfunktioner
 
@@ -89,97 +89,78 @@ gdial/
 
 ## 🚀 API Användning
 
-### Skicka SMS till grupp
+**Interaktiv API-dokumentation:** [http://localhost:3003/docs](http://localhost:3003/docs)
+
+**Snabbexempel:**
 ```bash
+# SMS till grupp
 curl -X POST http://localhost:3003/api/trigger-sms \
--H "Content-Type: application/json" \
--d '{
-  "message_content": "Viktigt meddelande!",
-  "group_ids": ["group-uuid"],
-  "scheduled_time": null
-}'
+  -H "Content-Type: application/json" \
+  -d '{"message_content": "Test", "group_ids": ["group-uuid"]}'
+
+# Röstsamtal
+curl -X POST http://localhost:3003/api/outreach \
+  -H "Content-Type: application/json" \
+  -d '{"campaign_name": "Test", "group_id": "group-uuid"}'
 ```
 
-### Starta röstsamtalskampanj
-```bash
-curl -X POST http://localhost:3003/api/outreach \
--H "Content-Type: application/json" \
--d '{
-  "campaign_name": "Nödsamtal",
-  "message_id": "message-uuid",
-  "group_id": "group-uuid",
-  "call_mode": "tts"
-}'
-```
+*För fullständiga API-exempel och parametrar, se [live-dokumentationen](http://localhost:3003/docs).*
 
 ## 🧪 Utveckling
 
-### Lokala utvecklingsmiljö
+**Snabb utvecklingsstart:**
 ```bash
-# Backend
-cd app
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --reload --port 3003
+# Automatisk setup med GPU-stöd
+./launch-gdial-backend.sh
 
-# Frontend
-cd frontend_new
-npm install
-npm run dev
+# Manuell backend-utveckling
+source venv/bin/activate
+uvicorn app.main:app --reload --port 3003
+
+# Frontend-utveckling
+cd frontend_new && npm install && npm run dev
 ```
 
-### Testning
+**Testning:**
 ```bash
-# Backend tester
-pytest
-
-# Frontend tester
-cd frontend_new
-npm test
+pytest                    # Backend-tester
+cd frontend_new && npm test  # Frontend-tester
 ```
 
 ## 📖 Dokumentation
 
-- **[Projektöversikt](docs/PROJECT_OVERVIEW.md)** - Detaljerad systemöversikt
-- **[Kodningsriktlinjer](docs/code-guidelines.md)** - Utvecklingsstandards
-- **[API-dokumentation](docs/api/)** - REST API referens
-- **[Docker Setup](docs/docker-README.md)** - Container deployment
-- **[Utvecklingsguide](docs/GDial_Development_Info.md)** - Utvecklarinformation
+- **[📋 Dokumentationsindex](docs/index.md)** - Komplett dokumentationsöversikt
+- **[🏗️ Projektöversikt](docs/PROJECT_OVERVIEW.md)** - Systemarkitektur och struktur
+- **[⚙️ Installation & Konfiguration](docs/DOCUMENTATION.md)** - Detaljerad setup-guide
+- **[👨‍💻 Kodningsriktlinjer](docs/code-guidelines.md)** - Utvecklingsstandards för AI-agenter
+- **[🐳 Docker Deployment](docs/docker-README.md)** - Container-baserad deployment
+- **[🔌 API-dokumentation](http://localhost:3003/docs)** - Interaktiv OpenAPI-dokumentation
 
 ## 🔧 Konfiguration
 
-Skapa en `.env`-fil baserad på `.env.example`:
-
-```env
-# Twilio
-TWILIO_ACCOUNT_SID=your_account_sid
-TWILIO_AUTH_TOKEN=your_auth_token
-TWILIO_PHONE_NUMBER=+1234567890
-
-# Database
-DATABASE_URL=sqlite:///./gdial.db
-
-# API
-API_PORT=3003
-LOG_LEVEL=INFO
-
-# TTS
-GOOGLE_CLOUD_TTS_KEY_PATH=path/to/credentials.json
+Skapa `.env` från mall:
+```bash
+cp .env.example .env
+# Redigera .env med dina Twilio-uppgifter
 ```
+
+**Viktiga inställningar:**
+- `TWILIO_ACCOUNT_SID` & `TWILIO_AUTH_TOKEN` - Twilio API-uppgifter
+- `TWILIO_PHONE_NUMBER` - Ditt Twilio-telefonnummer
+- `DATABASE_URL` - Databasanslutning (standard: SQLite)
+- `API_PORT` - Server-port (standard: 3003)
+
+*Se [.env.example](.env.example) för alla tillgängliga inställningar.*
 
 ## 🐳 Docker Deployment
 
 ```bash
-# Bygg och starta alla tjänster
-docker-compose up -d
-
-# Visa loggar
-docker-compose logs -f
-
-# Stoppa tjänster
-docker-compose down
+docker-compose up -d     # Starta alla tjänster
+docker-compose logs -f   # Visa loggar
+docker-compose down      # Stoppa tjänster
 ```
+
+*För detaljerad Docker-dokumentation, se [docs/docker-README.md](docs/docker-README.md)*
 
 ## 🤝 Bidra
 

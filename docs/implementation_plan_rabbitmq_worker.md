@@ -1,7 +1,10 @@
-# Implementation Plan: RabbitMQ Message Queue and Worker Architecture
+# 📋 Historisk implementationsplan: RabbitMQ Worker-arkitektur
 
-## Overview
-This document outlines a plan to implement a message queue-based architecture using RabbitMQ for the GDial system. The goal is to improve scalability, reliability, and performance by decoupling call processing from the main application.
+> **⚠️ HISTORISK DOKUMENTATION**  
+> Detta dokument bevaras för historisk referens. RabbitMQ-arkitekturen har redan implementerats i det aktuella systemet. Se [README_RABBITMQ.md](README_RABBITMQ.md) för aktuell konfiguration och användning.
+
+## Översikt
+Detta dokument beskriver den ursprungliga planen för att implementera en meddelandeköbaserad arkitektur med RabbitMQ för GDial-systemet. Målet var att förbättra skalbarhet, tillförlitlighet och prestanda genom att frikoppla samtalsbearbetning från huvudapplikationen.
 
 ## Current Architecture Analysis
 The current system:

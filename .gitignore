@@ -191,17 +191,42 @@ pids
 .env.*.local
 .env.local
 
-# IDE / Editor specific
-/.vscode/
-/.idea/
+# Project-specific files
+*.db
+*.log
+*.pid
+/static/audio/
+/logs/
+/config/
+
+# Backup files
+*.bak
+*.backup
+*.senv
+.backup.*
+
+# Coverage files
+.coverage
+.coverage.*
+htmlcov/
+
+# IDE and editor files
+.vscode/
+.idea/
 *.swp
+*.swo
 *~
 
-# Databases
-*.db
-*.sqlite
-*.sqlite3
-dialer.db.backup
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+ehthumbs.db
+Thumbs.db
 
 # Logs
 *.log

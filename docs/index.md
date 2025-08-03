@@ -1,59 +1,72 @@
-# GDial Documentation Hub
+# 📚 GDial Dokumentationshub
 
-Välkommen till den centrala dokumentationshubben för GDial-projektet. Detta index ger en organiserad översikt av all tillgänglig dokumentation.
+Välkommen till den centrala dokumentationshubben för GDial-projektet. Denna sida ger en organiserad översikt av all tillgänglig dokumentation för utvecklare, deployment-ansvariga och API-användare.
+
+## 🎯 Snabbnavigering
+
+### 👨‍💻 För utvecklare
+1. **[🏗️ Projektöversikt](PROJECT_OVERVIEW.md)** - Systemarkitektur och teknisk stack
+2. **[👨‍💻 Kodningsriktlinjer](code-guidelines.md)** - Utvecklingsstandards för AI-agenter
+3. **[⚙️ Installation & Utveckling](DOCUMENTATION.md)** - Detaljerad setup och utvecklingsguide
+
+### 🚀 För deployment
+1. **[🐳 Docker Deployment](docker-README.md)** - Container-baserad deployment
+2. **[🐳 Docker CLI](docker-cli-README.md)** - Kommandoradsreferens
+3. **[🔄 RabbitMQ Setup](README_RABBITMQ.md)** - Meddelandekö konfiguration
+
+### 🔌 För API-användning
+1. **[📖 API Dokumentation](http://localhost:3003/docs)** - Interaktiv OpenAPI-dokumentation
+2. **[📄 OpenAPI Spec](openapi.json)** - Maskinläsbar API-specifikation
+3. **[⚙️ Konfigurationsguide](DOCUMENTATION.md#konfiguration)** - API-setup och autentisering
 
 ## 📋 Huvuddokumentation
 
-- **[Projektöversikt](PROJECT_OVERVIEW.md)** - Omfattande systemöversikt och arkitektur
-- **[Kodningsriktlinjer](code-guidelines.md)** - Utvecklingsstandards för AI-agenter
-- **[Huvuddokumentation](DOCUMENTATION.md)** - Installation, konfiguration och utveckling
+### 🏗️ Systemöversikt
+- **[Projektöversikt](PROJECT_OVERVIEW.md)** - Omfattande systemarkitektur, teknisk stack och katalogstruktur
+- **[Installation & Konfiguration](DOCUMENTATION.md)** - Komplett guide för installation, konfiguration och användning
 
-## 🚀 Snabbstart
+### 👨‍💻 Utveckling
+- **[Kodningsriktlinjer](code-guidelines.md)** - Utvecklingsstandards specifikt för AI Windsurf-agenter
+- **[Frontend Dokumentation](frontend/)** - React-applikation och komponentstruktur
 
-- **[Docker Setup](docker-README.md)** - Container-baserad deployment
-- **[Docker CLI](docker-cli-README.md)** - Kommandoradsreferens
+### 🚀 Deployment & Infrastruktur
+- **[Docker Setup](docker-README.md)** - Container-baserad deployment med Docker Compose
+- **[Docker CLI](docker-cli-README.md)** - Kommandoradsverktyg och troubleshooting
+- **[RabbitMQ Setup](README_RABBITMQ.md)** - Meddelandekö konfiguration och worker-arkitektur
 
-## 🏗️ Systemkomponenter
+## 🎯 Funktionsdokumentation
 
-### Backend
-- **[RabbitMQ Setup](README_RABBITMQ.md)** - Meddelandekö konfiguration
-- **[API Dokumentation](api/)** - REST API referens
-- **[OpenAPI Spec](openapi.json)** - Automatiskt genererad API-specifikation
+### 📱 Kommunikationsfunktioner
+- **[Group Messenger](group_messenger_feature.md)** - Gruppmeddelanden och massutskick
+- **[Swedish TTS Implementation](swedish_tts_implementation.md)** - Text-till-tal implementering
+- **[Swedish TTS Options](swedish_tts_options.md)** - TTS-konfiguration och röstval
 
-### Frontend
-- **[Frontend Dokumentation](frontend/)** - React-applikation
+## 📋 Historiska implementationsplaner
 
-## 🎯 Funktioner
+*Dessa dokument bevaras för historisk referens och kan innehålla föråldrad information:*
 
-- **[Group Messenger](group_messenger_feature.md)** - Gruppmeddelanden funktionalitet
-- **[Swedish TTS Implementation](swedish_tts_implementation.md)** - Text-till-tal på svenska
-- **[Swedish TTS Options](swedish_tts_options.md)** - TTS-alternativ och konfiguration
+- **[RabbitMQ Worker Plan](implementation_plan_rabbitmq_worker.md)** - Ursprunglig worker-arkitektur plan
+- **[Swedish TTS Plan](implementation_plan_swedish_tts.md)** - TTS-implementeringsplan
+- **[Settings Implementation Plan](settings_implementation_plan.md)** - Inställningssystem plan
 
-## 📋 Implementationsplaner
+## 🔗 Snabblänkar
 
-- **[RabbitMQ Worker Plan](implementation_plan_rabbitmq_worker.md)** - Worker-arkitektur
-- **[Swedish TTS Plan](implementation_plan_swedish_tts.md)** - TTS-implementering
-- **[Settings Implementation Plan](settings_implementation_plan.md)** - Inställningssystem
+- **[🏠 Huvudprojekt README](../README.md)** - Projektöversikt och snabbstart
+- **[🔌 Live API-dokumentation](http://localhost:3003/docs)** - Swagger UI (kräver att servern körs)
+- **[🔌 ReDoc API-dokumentation](http://localhost:3003/redoc)** - Alternativ API-dokumentation
+- **[📊 Projektstatistik](../README.md#-erkännanden)** - Teknisk stack och erkännanden
 
-## 🔍 Navigering
+## 📝 Dokumentationsstandard
 
-### För utvecklare
-1. Börja med [Projektöversikt](PROJECT_OVERVIEW.md)
-2. Läs [Kodningsriktlinjer](code-guidelines.md)
-3. Följ utvecklingsinstruktioner i [Huvuddokumentation](DOCUMENTATION.md)
-
-### För deployment
-1. Se [Docker Setup](docker-README.md)
-2. Konfigurera enligt [Huvuddokumentation](DOCUMENTATION.md)
-3. Använd automatiska launch scripts (beskrivs i huvuddokumentationen)
-
-### För API-användning
-1. Granska [API Dokumentation](api/)
-2. Se [OpenAPI Spec](openapi.json) för detaljer
-3. Testa med exempel från dokumentationen
+Alla dokument följer:
+- **AI Windsurf-kompatibilitet** - Optimerad för AI-assisterad utveckling
+- **Svenska språket** - Primärt språk för användardokumentation
+- **Markdown-formatering** - Konsekvent struktur och formatering
+- **Emoji-navigation** - Visuell guidning för snabb orientering
 
 ---
 
 **Senast uppdaterad:** 2025-01-03  
-**Version:** 2.0  
-**Dokumentationsstandard:** AI Windsurf kompatibel
+**Version:** 2.1  
+**Dokumentationsstandard:** AI Windsurf kompatibel  
+**Språk:** Svenska (primärt), Engelska (teknisk dokumentation)

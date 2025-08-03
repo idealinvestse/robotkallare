@@ -1,8 +1,14 @@
-# GDial Settings Implementation Plan
+# GDial# Historisk implementationsplan: Settings System
 
-## Current Structure Analysis
+> **HISTORISK DOKUMENTATION**  
+> Detta dokument bevaras för historisk referens. Inställningssystemet har redan implementerats i det aktuella systemet. Se [DOCUMENTATION.md](DOCUMENTATION.md#konfiguration) för aktuell konfiguration.
 
-The GDial settings system currently consists of:
+## Översikt
+Detta dokument beskriver den ursprungliga planen för att implementera ett omfattande inställningssystem för GDial-applikationen. Målet var att tillhandahålla ett flexibelt, användarvänligt sätt att konfigurera olika aspekter av systemet genom både webbgränssnittet och konfigurationsfiler.
+
+## Nuvarande strukturanalys
+
+GDial-inställningssystemet består för närvarande av:
 
 1. **SQLModel Database Models:**
    - `SystemSetting`: Key-value storage with type conversion for general settings
