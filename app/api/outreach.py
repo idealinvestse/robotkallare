@@ -2,15 +2,14 @@ import uuid
 from typing import List, Optional, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlmodel import Session
 
 from app.database import get_session
-from ..services.outreach_service import OutreachService
+from app.dependencies import get_outreach_service
 from ..models import OutreachCampaign # For the response model
 from ..schemas import OutreachCampaignResponse # Assuming a response schema exists or define one
 from ..logger import logger
-from app.publisher import QueuePublisher
 from datetime import datetime
 # from ..api.auth import get_current_active_user # If auth is needed
 # from ..models import User # If using auth
@@ -37,20 +36,22 @@ class OutreachRequest(BaseModel):
         )
     )
 
-    @validator('message_id', always=True)
-    def validate_message_id(cls, v, values):
-        # message_id is required
+    @field_validator('message_id')
+    @classmethod
+    def validate_message_id(cls, v: Optional[uuid.UUID]) -> Optional[uuid.UUID]:
+        """Validate that message_id is provided."""
         if v is None:
             raise ValueError("message_id is required")
         return v
 
-    @validator('group_id', 'contact_ids', always=True)
-    def check_group_or_contacts(cls, v, values):
-        group_id = values.get('group_id')
-        contact_ids = values.get('contact_ids')
+    @model_validator(mode='after')
+    def check_group_or_contacts(self) -> 'OutreachRequest':
+        """Validate that exactly one of group_id or contact_ids is provided."""
+        group_id = self.group_id
+        contact_ids = self.contact_ids
         if not (bool(group_id) ^ bool(contact_ids)):
             raise ValueError('Must provide exactly one of group_id or contact_ids')
-        return v # Return the validated field itself
+        return self
 
 # --- Response Schema (Example - Adapt as needed) ---
 # You might reuse OutreachCampaign or create a specific response schema
@@ -68,9 +69,8 @@ class OutreachCampaignCreateResponse(BaseModel):
 # --- API Endpoint --- 
 @router.post("/", response_model=OutreachCampaignCreateResponse, status_code=status.HTTP_202_ACCEPTED)
 async def initiate_outreach_campaign(
-    request: Request,
     request_data: OutreachRequest,
-    db: Session = Depends(get_session),
+    outreach_service = Depends(get_outreach_service),
     # current_user: User = Depends(get_current_active_user) # Uncomment if auth required
 ):
     """Initiate an outreach campaign involving calls and potentially SMS.
@@ -87,16 +87,7 @@ async def initiate_outreach_campaign(
     """
     logger.info(f"Received request to initiate outreach campaign: {request_data.campaign_name or 'Unnamed'}")
 
-    # --- Get Queue Publisher from App State ---
-    queue_publisher: Optional[QueuePublisher] = request.app.state.queue_publisher
-    if not queue_publisher:
-        logger.error("Queue publisher is not available. Cannot initiate outreach.")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Messaging service is not configured or available."
-        )
-    
-    outreach_service = OutreachService(db, queue_publisher)
+    # Use injected outreach service with new architecture
 
     try:
         # user_id = current_user.id # Uncomment if auth required

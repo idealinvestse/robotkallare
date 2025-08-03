@@ -18,19 +18,40 @@ from app.publisher import QueuePublisher # Changed import source
 from app.logger import logger # Assuming a logger setup
 
 class OutreachService:
-    def __init__(self, session: Session, queue_publisher: QueuePublisher):
+    def __init__(
+        self, 
+        session: Session, 
+        contact_repo: ContactRepository,
+        group_repo: GroupRepository,
+        outreach_repo: OutreachRepository,
+        call_orchestration_service=None,
+        queue_publisher=None
+    ):
+        """Initialize OutreachService with dependency injection.
+        
+        Args:
+            session: Database session
+            contact_repo: Contact repository
+            group_repo: Group repository  
+            outreach_repo: Outreach repository
+            call_orchestration_service: Call orchestration service
+            queue_publisher: Queue publisher for background tasks
+        """
         self.session = session
-        self.contact_repo = ContactRepository(session)
-        self.group_repo = GroupRepository(session)
-        self.message_repo = MessageRepository(session) # Need this to validate message_id
-        self.outreach_repo = OutreachRepository(session) # Initialize the repository
-        self.queue_publisher = queue_publisher # Store the injected publisher instance
-
-        # Placeholder for queue publishing mechanism
-        # self.queue_publisher: QueuePublisher = get_queue_publisher()
-        # For now, we'll just log the intent to publish
-        # logger.info("OutreachService initialized. Queue publisher needs proper setup.")
-        logger.info("OutreachService initialized.")
+        self.contact_repo = contact_repo
+        self.group_repo = group_repo
+        self.message_repo = MessageRepository(session)
+        self.outreach_repo = outreach_repo
+        self.queue_publisher = queue_publisher
+        
+        # Import here to avoid circular imports
+        if call_orchestration_service is None:
+            from app.services.call_orchestration_service import CallOrchestrationService
+            self.call_orchestration_service = CallOrchestrationService(session)
+        else:
+            self.call_orchestration_service = call_orchestration_service
+        
+        logger.info("OutreachService initialized with new architecture.")
 
     async def initiate_outreach(
         self,
@@ -120,42 +141,50 @@ class OutreachService:
         for contact in valid_contacts:
             try:
                 if call_mode == "tts":
-                    call_sid = call_service.make_twilio_call(to_number=phone.number, message_id=message_id)
-                    logger.info(f"Initiated TTS call to {phone.number}, SID: {call_sid}")
-                    queued_count += 1
-                    break  # Only call the first valid phone number for each contact
+                    # Use CallOrchestrationService for TTS calls
+                    result = await self.call_orchestration_service.dial_contacts(
+                        contact_ids=[contact.id],
+                        message_id=message_id,
+                        call_run_name=f"Campaign {campaign.id} - {contact.name}",
+                        call_run_description=f"TTS call for campaign {campaign.id}"
+                    )
+                    if result.success:
+                        logger.info(f"Initiated TTS call to {contact.name}")
+                        queued_count += 1
+                    else:
+                        logger.error(f"Failed TTS call to {contact.name}: {result.errors}")
+                        
                 elif call_mode == "custom":
-                    # For custom, make direct calls instead of queuing
-                    for phone in contact.phone_numbers:
-                        try:
-                            # Make direct custom call
-                            call_sid = call_service.make_custom_call(
-                                to_number=phone.number,
-                                campaign_id=campaign.id,
-                                contact_id=contact.id
-                            )
-                            logger.info(f"Initiated custom call to {phone.number}, SID: {call_sid}")
-                            queued_count += 1
-                            break  # Only call the first valid phone number for each contact
-                        except Exception as phone_err:
-                            logger.error(f"Failed to call {phone.number} for contact {contact.id}: {phone_err}")
-                            # Continue to next phone if one fails
+                    # For custom calls, we need custom message content
+                    # This would typically come from the campaign or be generated
+                    custom_message = f"Custom message for campaign {campaign.id}"
+                    
+                    result = await self.call_orchestration_service.make_custom_call(
+                        contact_id=contact.id,
+                        message_content=custom_message,
+                        save_as_template=False,
+                        call_run_id=None  # Could link to campaign if needed
+                    )
+                    
+                    if result.success:
+                        logger.info(f"Initiated custom call to {contact.name}")
+                        queued_count += 1
+                    else:
+                        logger.error(f"Failed custom call to {contact.name}: {result.errors}")
                 else:
-                    # For traditional calls, use the queue
-                    job_payload = {
-                        "job_id": str(uuid.uuid4()),
-                        "campaign_id": str(campaign.id),
-                        "contact_id": str(contact.id),
-                        "message_id": str(message_id),
-                        "call_mode": call_mode
-                    }
+                    # For other call modes, use direct orchestration
+                    result = await self.call_orchestration_service.dial_contacts(
+                        contact_ids=[contact.id],
+                        message_id=message_id,
+                        call_run_name=f"Campaign {campaign.id} - {contact.name}",
+                        call_run_description=f"{call_mode} call for campaign {campaign.id}"
+                    )
                     
-                    # Handle actual queue publishing
-                    if self.queue_publisher:
-                        await self.queue_publisher.publish("gdial.outreach.single", job_payload)
-                    
-                    logger.info(f"Published job for contact {contact.id} (Campaign {campaign.id}, Mode: {call_mode})")
-                    queued_count += 1
+                    if result.success:
+                        logger.info(f"Initiated {call_mode} call to {contact.name}")
+                        queued_count += 1
+                    else:
+                        logger.error(f"Failed {call_mode} call to {contact.name}: {result.errors}")
             except Exception as e:
                 publish_errors += 1
                 logger.error(f"Failed to process contact {contact.id}: {e}", exc_info=True)

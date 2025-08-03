@@ -6,10 +6,9 @@ from twilio.request_validator import RequestValidator
 
 from app.database import get_session
 from app.models import CallLog, SmsLog
-from app.repositories.call_repository import CallRepository # Assuming repository exists
-from app.repositories.sms_repository import SmsRepository # Assuming repository exists
+from app.dependencies import get_call_repository, get_sms_repository
 from app.logger import logger
-from app.settings import settings, AppSettings
+from app.config import get_settings
 
 router = APIRouter(tags=["webhooks"])
 
@@ -23,6 +22,9 @@ async def _validate_twilio_request(request: Request) -> bool:
     Returns:
         bool: True if request is valid, False otherwise
     """
+    # Get settings
+    settings = get_settings()
+    
     # Skip validation in development environment
     if getattr(settings, 'ENVIRONMENT', 'development') == 'development':
         logger.debug("Skipping Twilio signature validation in development environment")
@@ -52,7 +54,7 @@ async def _validate_twilio_request(request: Request) -> bool:
 @router.post("/call-status")
 async def handle_call_status(
     request: Request,
-    db: Session = Depends(get_session)
+    call_repo = Depends(get_call_repository)
 ):
     """Handle call status updates from Twilio."""
     # Validate Twilio webhook signature for security
@@ -82,8 +84,7 @@ async def handle_call_status(
             # Return 200 to Twilio but log the issue
             return VoiceResponse()
 
-        # Use repository to update the CallLog
-        call_repo = CallRepository(db)
+        # Use injected repository to update the CallLog
         call_log = call_repo.get_call_log_by_sid(call_sid)
 
         if not call_log:
@@ -142,7 +143,7 @@ async def handle_call_status(
 @router.post("/sms-status")
 async def handle_sms_status(
     request: Request,
-    db: Session = Depends(get_session)
+    sms_repo = Depends(get_sms_repository)
 ):
     """Handle SMS status updates (delivery receipts) from Twilio."""
     # Validate Twilio webhook signature for security
@@ -170,8 +171,7 @@ async def handle_sms_status(
             logger.warning("Missing MessageStatus in Twilio SMS webhook payload")
             return MessagingResponse()
 
-        # Use repository to update the SmsLog
-        sms_repo = SmsRepository(db)
+        # Use injected repository to update the SmsLog
         sms_log = sms_repo.get_sms_log_by_sid(message_sid)
 
         if not sms_log:

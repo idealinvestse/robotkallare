@@ -54,6 +54,10 @@ from app.publisher import QueuePublisher
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # FIRST: Validate environment variables before any other startup logic
+    from app.config.env_validator import EnvironmentValidator
+    EnvironmentValidator.validate_startup()
+    
     # Startup logic moved from on_startup
     logging.info("Lifespan: Startup sequence initiating...")
     create_db_and_tables()
