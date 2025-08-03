@@ -571,6 +571,9 @@ class AppSettings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
 
+    # Environment
+    ENVIRONMENT: str = "development"
+
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
 

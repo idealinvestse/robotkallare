@@ -143,13 +143,28 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="GDial Emergency Notification System API", lifespan=lifespan)
 
 # CORS configuration to allow requests from any origin during development
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS configuration - restrict origins in production
+# Use CORS_ORIGINS from settings, which can be overridden by environment variables
+allowed_origins = settings.CORS_ORIGINS.split(",") if settings.CORS_ORIGINS else []
+
+if settings.ENVIRONMENT == "development":
+    # In development, allow all origins for easier testing
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # For production, restrict to known origins from settings
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
 
 # Mount routers
 app.include_router(settings_router)

@@ -192,6 +192,8 @@ class SmsLog(SQLModel, table=True):
     message_sid: str
     sent_at: datetime = Field(default_factory=datetime.now)
     status: str  # sent | failed
+    error_code: Optional[str] = Field(default=None)
+    error_message: Optional[str] = Field(default=None)
     message_id: Optional[uuid.UUID] = Field(default=None, foreign_key="message.id")
     retry_count: int = 0
     retry_at: Optional[datetime] = None
