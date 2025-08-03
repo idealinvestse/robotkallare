@@ -28,21 +28,20 @@ class OutreachRequest(BaseModel):
     contact_ids: Optional[List[uuid.UUID]] = None
     campaign_name: Optional[str] = Field(None, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
-    call_mode: Literal["tts", "audio_file", "realtime_ai"] = Field(
+    call_mode: Literal["tts", "audio_file"] = Field(
         default="tts",
         description=(
             "Specifies the mode for outgoing calls. "
             "'tts': Use Text-to-Speech based on the message_id. "
-            "'audio_file': Play a pre-recorded audio file (requires message_id with audio). "
-            "'realtime_ai': Connect the call to a realtime AI voice assistant (message_id is ignored)."
+            "'audio_file': Play a pre-recorded audio file (requires message_id with audio)."
         )
     )
 
     @validator('message_id', always=True)
     def validate_message_id(cls, v, values):
-        # message_id is required unless using realtime_ai mode
-        if values.get('call_mode') != "realtime_ai" and v is None:
-            raise ValueError("message_id is required unless call_mode is realtime_ai")
+        # message_id is required
+        if v is None:
+            raise ValueError("message_id is required")
         return v
 
     @validator('group_id', 'contact_ids', always=True)
@@ -81,8 +80,7 @@ async def initiate_outreach_campaign(
 
     - **tts**: Synthesizes speech from the text associated with `message_id`.
     - **audio_file**: Plays a pre-recorded audio file associated with `message_id`.
-    - **realtime_ai**: Connects the call directly to a realtime AI voice assistant.
-      In this mode, `message_id` is not required as the AI handles the conversation.
+
 
     The campaign details and target contacts are queued for processing.
     Returns the details of the created campaign upon successful queuing.

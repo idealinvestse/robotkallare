@@ -55,62 +55,6 @@ class CallService:
         )
         return call.sid
     
-    def make_realtime_ai_call(
-        self,
-        to_number: str,
-        campaign_id: Optional[uuid.UUID] = None,
-        contact_id: Optional[uuid.UUID] = None
-    ) -> str:
-        """Make a realtime AI call using Twilio and OpenAI.
-        
-        This creates a Twilio call that connects to our realtime API endpoint,
-        which then establishes a WebSocket connection between Twilio and OpenAI
-        to enable an interactive conversation with the AI assistant.
-        
-        Args:
-            to_number: Phone number to call
-            campaign_id: Optional campaign ID for tracking
-            contact_id: Optional contact ID for tracking
-            
-        Returns:
-            Twilio call SID
-        """
-        # Set up callback URL
-        base_url = settings.PUBLIC_URL or f"http://{settings.API_HOST}:{settings.API_PORT}"
-        callback_url = f"{base_url}/api/v1/realtime/incoming-call"
-        
-        # Add metadata if provided
-        if campaign_id or contact_id:
-            meta = {}
-            if campaign_id:
-                meta["campaign_id"] = str(campaign_id)
-            if contact_id:
-                meta["contact_id"] = str(contact_id)
-            
-            import json
-            import urllib.parse
-            meta_json = json.dumps(meta)
-            callback_url += f"?call_meta={urllib.parse.quote(meta_json)}"
-        
-        # Create the call
-        try:
-            call = self.twilio_client.calls.create(
-                to=to_number,
-                from_=settings.TWILIO_FROM_NUMBER,
-                url=callback_url,
-                timeout=settings.CALL_TIMEOUT_SEC,
-                record=True,  # Record the call for quality assurance
-                status_callback_event=["completed"],
-                status_callback=f"{base_url}/call-status",
-                status_callback_method="POST"
-            )
-            logger.info(f"Initiated realtime AI call to {to_number}, SID: {call.sid}")
-            return call.sid
-            
-        except TwilioRestException as e:
-            logger.error(f"Failed to initiate realtime AI call: {str(e)}")
-            raise
-    
     async def dial_contacts(
         self,
         contacts: Optional[Sequence[uuid.UUID]] = None,

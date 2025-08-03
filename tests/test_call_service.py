@@ -106,33 +106,6 @@ class TestCallService:
         assert result["success"] is True
         call_service.make_twilio_call.assert_called_once()
     
-    def test_make_realtime_ai_call_success(self, call_service):
-        """Test successful realtime AI call creation."""
-        # Setup mock
-        mock_call_instance = Mock()
-        mock_call_instance.sid = "CA1234567890"
-        call_service.twilio_client.calls.create.return_value = mock_call_instance
-        
-        # Test the method
-        call_sid = call_service.make_realtime_ai_call("+1234567890")
-        
-        # Assertions
-        assert call_sid == "CA1234567890"
-        call_service.twilio_client.calls.create.assert_called_once()
-    
-    def test_make_realtime_ai_call_failure(self, call_service):
-        """Test realtime AI call creation failure."""
-        # Setup mock to raise exception
-        call_service.twilio_client.calls.create.side_effect = TwilioRestException(
-            status=500, 
-            uri="test", 
-            msg="Test error"
-        )
-        
-        # Test the method raises exception
-        with pytest.raises(TwilioRestException):
-            call_service.make_realtime_ai_call("+1234567890")
-    
     @patch('app.services.call_service.asyncio.sleep', return_value=None)
     async def test_dial_contacts_success(self, mock_sleep, call_service, sample_contact, sample_phone_numbers):
         """Test successful contact dialing."""

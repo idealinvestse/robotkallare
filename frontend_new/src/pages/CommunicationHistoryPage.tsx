@@ -3,7 +3,7 @@ import { useCallLogs } from '../hooks/useCallLogs';
 import { useSmsHistory, useSmsStats } from '../hooks/useSmsHistory';
 import CallHistoryTable from '../components/CallHistoryTable';
 import SmsHistoryTable from '../components/SmsHistoryTable';
-import RealtimeCallMonitor from '../components/RealtimeCallMonitor';
+
 
 /**
  * Sida för komplett kommunikationshistorik (samtal + SMS)
@@ -241,7 +241,6 @@ const CommunicationHistoryPage: React.FC = () => {
           
           {/* Sidokolumn med realtidsövervakning och snabbstatistik */}
           <div>
-            <RealtimeCallMonitor className="mb-6" />
             
             {/* SMS Statistik */}
             <div className="bg-white rounded-lg shadow p-4 mb-6">

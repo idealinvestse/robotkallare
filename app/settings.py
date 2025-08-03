@@ -163,31 +163,6 @@ class SecuritySettings(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
-class RealtimeSettings(SQLModel, table=True):
-    """Real-time AI call settings for the application.
-    Controls behavior of real-time AI calls and related features.
-    """
-    id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
-    openai_api_key: str = ""
-    voice: str = "alloy"
-    system_message: str = "You are a helpful assistant representing our organization. Keep responses brief and professional."
-    max_call_duration_minutes: int = 15
-    use_dtmf_fallback: bool = True
-    record_calls: bool = True
-    greeting_message: str = "Hello, I'm an AI assistant. How can I help you today?"
-    goodbye_message: str = "Thank you for calling. Have a great day!"
-    call_fallback_message: str = "I'm having trouble connecting to the AI service. Please try again later."
-    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
-    
-    def update(self, **kwargs):
-        """Update attributes on the settings object"""
-        for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
-        self.updated_at = datetime.now()
-
 # Setup logging
 logger = logging.getLogger(__name__)
 
@@ -215,53 +190,7 @@ def get_system_setting(session: Session, key: str, default_value: Any = None) ->
 
 # Default system settings - these are used if no settings exist in the database
 DEFAULT_SYSTEM_SETTINGS = {
-    "realtime": {
-        "openai_api_key": {
-            "value": "",  # Empty by default for security, must be set in environment or admin interface
-            "description": "OpenAI API key for realtime calls",
-            "group": "realtime"
-        },
-        "voice": {
-            "value": "alloy",
-            "description": "OpenAI voice for realtime calls (alloy, echo, fable, onyx, nova, shimmer)",
-            "group": "realtime"
-        },
-        "system_message": {
-            "value": "You are a helpful assistant representing our organization. Keep responses brief and professional.",
-            "description": "System message that guides AI behavior during calls",
-            "group": "realtime"
-        },
-        "max_call_duration_minutes": {
-            "value": "15",
-            "description": "Maximum duration for realtime AI calls in minutes",
-            "group": "realtime"
-        },
-        "use_dtmf_fallback": {
-            "value": "true",
-            "description": "Enable fallback to DTMF if speech recognition fails",
-            "group": "realtime"
-        },
-        "record_calls": {
-            "value": "true",
-            "description": "Whether to record calls for quality assurance",
-            "group": "realtime"
-        },
-        "greeting_message": {
-            "value": "Hello, I'm an AI assistant. How can I help you today?",
-            "description": "Initial greeting message for realtime calls",
-            "group": "realtime"
-        },
-        "goodbye_message": {
-            "value": "Thank you for calling. Have a great day!",
-            "description": "Goodbye message for realtime calls",
-            "group": "realtime"
-        },
-        "call_fallback_message": {
-            "value": "I'm having trouble connecting to the AI service. Please try again later.",
-            "description": "Message to play if the AI service fails",
-            "group": "realtime"
-        }
-    },
+
     "system": {
         "app_name": {
             "value": "GDial",
@@ -539,9 +468,6 @@ def get_security_settings(session: Session) -> SecuritySettings:
     """Get security settings from database."""
     return session.query(SecuritySettings).first() or SecuritySettings()
 
-def get_realtime_settings(session: Session) -> RealtimeSettings:
-    """Get realtime AI call settings from database."""
-    return session.query(RealtimeSettings).first() or RealtimeSettings()
 
 def get_settings_by_group(session: Session, group_name: Optional[str] = None) -> Dict[str, List[SystemSetting]]:
     """Get settings organized by group."""

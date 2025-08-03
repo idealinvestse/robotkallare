@@ -119,17 +119,22 @@ class OutreachService:
         
         for contact in valid_contacts:
             try:
-                if call_mode == "realtime_ai":
-                    # For realtime_ai, make direct calls instead of queuing
+                if call_mode == "tts":
+                    call_sid = call_service.make_twilio_call(to_number=phone.number, message_id=message_id)
+                    logger.info(f"Initiated TTS call to {phone.number}, SID: {call_sid}")
+                    queued_count += 1
+                    break  # Only call the first valid phone number for each contact
+                elif call_mode == "custom":
+                    # For custom, make direct calls instead of queuing
                     for phone in contact.phone_numbers:
                         try:
-                            # Make direct realtime AI call
-                            call_sid = call_service.make_realtime_ai_call(
+                            # Make direct custom call
+                            call_sid = call_service.make_custom_call(
                                 to_number=phone.number,
                                 campaign_id=campaign.id,
                                 contact_id=contact.id
                             )
-                            logger.info(f"Initiated realtime AI call to {phone.number}, SID: {call_sid}")
+                            logger.info(f"Initiated custom call to {phone.number}, SID: {call_sid}")
                             queued_count += 1
                             break  # Only call the first valid phone number for each contact
                         except Exception as phone_err:

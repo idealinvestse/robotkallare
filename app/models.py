@@ -4,8 +4,6 @@ from typing import Optional, List
 from enum import Enum
 from sqlmodel import Field, SQLModel, Relationship, select, JSON, Column
 
-# Import realtime-specific schemas
-from app.realtime.schemas import RealtimeCallStatus
 
 # Support Model.select() in tests: map to sqlmodel.select(Model)
 SQLModel.select = classmethod(lambda cls: select(cls))
@@ -62,18 +60,6 @@ class ScheduledMessageContactLink(SQLModel, table=True):
     """Association table for many-to-many relationship between scheduled messages and contacts"""
     scheduled_message_id: uuid.UUID = Field(foreign_key="scheduledmessage.id", primary_key=True)
     contact_id: uuid.UUID = Field(foreign_key="contact.id", primary_key=True)
-
-class RealtimeCall(SQLModel, table=True):
-    """Track realtime AI calls."""
-    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
-    call_sid: str = Field(index=True)
-    campaign_id: Optional[uuid.UUID] = Field(default=None, foreign_key="outreachcampaign.id")
-    contact_id: Optional[uuid.UUID] = Field(default=None, foreign_key="contact.id")
-    status: str = Field(default="initiated")
-    started_at: datetime = Field(default_factory=datetime.utcnow)
-    ended_at: Optional[datetime] = Field(default=None)
-    duration_seconds: Optional[int] = Field(default=None)
-    call_metadata: Optional[dict] = Field(default=None, sa_column=Column(JSON))
 
 
 class CallRun(SQLModel, table=True):
