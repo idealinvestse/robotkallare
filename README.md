@@ -130,6 +130,7 @@ cd frontend_new && npm test  # Frontend-tester
 ## 📖 Dokumentation
 
 - **[📋 Dokumentationsindex](docs/index.md)** - Komplett dokumentationsöversikt
+- **[🚀 Progressionsvy](docs/PROGRESSION_VIEW.md)** - Kollaborationsplan och projektöversikt
 - **[🏗️ Projektöversikt](docs/PROJECT_OVERVIEW.md)** - Systemarkitektur och struktur
 - **[⚙️ Installation & Konfiguration](docs/DOCUMENTATION.md)** - Detaljerad setup-guide
 - **[👨‍💻 Kodningsriktlinjer](docs/code-guidelines.md)** - Utvecklingsstandards för AI-agenter

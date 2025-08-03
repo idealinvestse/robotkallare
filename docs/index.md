@@ -4,10 +4,15 @@ Välkommen till den centrala dokumentationshubben för GDial-projektet. Denna si
 
 ## 🎯 Snabbnavigering
 
+### 🚀 För projektledning & kollaboration
+1. **[🚀 Progressionsvy](PROGRESSION_VIEW.md)** - Komplett kollaborationsplan och projektöversikt
+2. **[📊 Projektöversikt](PROJECT_OVERVIEW.md)** - Systemarkitektur och teknisk stack
+3. **[📋 Dokumentationsindex](index.md)** - Navigering till all dokumentation
+
 ### 👨‍💻 För utvecklare
-1. **[🏗️ Projektöversikt](PROJECT_OVERVIEW.md)** - Systemarkitektur och teknisk stack
-2. **[👨‍💻 Kodningsriktlinjer](code-guidelines.md)** - Utvecklingsstandards för AI-agenter
-3. **[⚙️ Installation & Utveckling](DOCUMENTATION.md)** - Detaljerad setup och utvecklingsguide
+1. **[👨‍💻 Kodningsriktlinjer](code-guidelines.md)** - Utvecklingsstandards för AI-agenter
+2. **[⚙️ Installation & Utveckling](DOCUMENTATION.md)** - Detaljerad setup och utvecklingsguide
+3. **[🔧 Teknisk arkitektur](PROJECT_OVERVIEW.md)** - Djupgående systemöversikt
 
 ### 🚀 För deployment
 1. **[🐳 Docker Deployment](docker-README.md)** - Container-baserad deployment
