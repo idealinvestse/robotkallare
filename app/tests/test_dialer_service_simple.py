@@ -31,8 +31,9 @@ class TestDialerServiceSimple:
         """Test that expected methods are available."""
         expected_methods = [
             'start_call_run',
-            'dial_contacts_in_run',
-            'get_call_run_statistics'
+            'dial_contact',
+            'get_call_run_stats',
+            'update_call_run_status'
         ]
         
         for method in expected_methods:
@@ -49,8 +50,9 @@ class TestDialerServiceSimple:
         """Test that service methods are callable."""
         # These should not raise AttributeError
         assert callable(getattr(dialer_service, 'start_call_run'))
-        assert callable(getattr(dialer_service, 'dial_contacts_in_run'))
-        assert callable(getattr(dialer_service, 'get_call_run_statistics'))
+        assert callable(getattr(dialer_service, 'dial_contact'))
+        assert callable(getattr(dialer_service, 'get_call_run_stats'))
+        assert callable(getattr(dialer_service, 'update_call_run_status'))
     
     @pytest.mark.asyncio
     async def test_async_methods_available(self, dialer_service):
@@ -59,7 +61,7 @@ class TestDialerServiceSimple:
         import asyncio
         
         # These methods should be async
-        async_methods = ['start_call_run', 'dial_contacts_in_run']
+        async_methods = ['start_call_run', 'dial_contact']
         
         for method_name in async_methods:
             method = getattr(dialer_service, method_name)
