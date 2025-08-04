@@ -4,8 +4,18 @@ import uuid
 import logging
 from typing import Any, List, Optional, Dict, Union
 from datetime import datetime
-from pydantic import BaseModel, validator, Field
-from pydantic.validators import str_validator
+from pydantic import BaseModel, Field
+try:
+    from pydantic import validator
+except ImportError:
+    from pydantic.v1 import validator
+
+try:
+    from pydantic.validators import str_validator
+except ImportError:
+    # Fallback for newer Pydantic versions
+    def str_validator(v):
+        return str(v) if v is not None else v
 
 logger = logging.getLogger(__name__)
 

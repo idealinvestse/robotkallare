@@ -5,7 +5,7 @@ from sqlmodel import Session
 
 from app.config.settings_service import SettingsService
 from app.config.settings_models import SystemSetting, DtmfSetting, SmsSettings
-from app.config.settings_defaults import get_default_system_settings
+from app.config.settings_defaults import DEFAULT_SYSTEM_SETTINGS
 
 
 class TestSettingsService:
