@@ -5,7 +5,8 @@ import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-from sqlmodel import Field, SQLModel, JSON, Column
+from sqlmodel import Field, SQLModel, Column
+from sqlalchemy import JSON
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +99,7 @@ class DtmfSetting(SQLModel, table=True):
     dtmf_menu_style: str = "standard"
     inter_digit_timeout: int = 3
     allow_message_skip: bool = True
-    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column_kwargs={"type_": JSON})
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
@@ -124,7 +125,7 @@ class SmsSettings(SQLModel, table=True):
     business_hours_start: str = "08:00"
     business_hours_end: str = "18:00"
     international_sms_enabled: bool = False
-    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column_kwargs={"type_": JSON})
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
@@ -147,7 +148,7 @@ class NotificationSettings(SQLModel, table=True):
     high_volume_threshold: int = 100
     emergency_escalation_enabled: bool = True
     emergency_escalation_threshold: int = 15
-    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column_kwargs={"type_": JSON})
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
@@ -166,6 +167,6 @@ class SecuritySettings(SQLModel, table=True):
     api_rate_limit_per_minute: int = 1000
     enable_request_logging: bool = True
     log_sensitive_data: bool = False
-    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+    extra_settings: Optional[Dict[str, Any]] = Field(default=None, sa_column_kwargs={"type_": JSON})
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)

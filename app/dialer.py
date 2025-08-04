@@ -11,7 +11,7 @@ from sqlmodel import Session
 
 from app.services.dialer_service import DialerService as NewDialerService
 from app.services.call_service import CallService
-from app.workers.call_worker import dial_contacts_worker
+# from app.workers.call_worker import dial_contacts_worker  # Function doesn't exist
 from app.models import Contact, Message, CallRun
 
 logger = logging.getLogger(__name__)

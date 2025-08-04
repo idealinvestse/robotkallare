@@ -117,8 +117,8 @@ def get_settings_by_group(session: Session, group_name: Optional[str] = None) ->
     return settings_service.get_settings_by_group(group_name)
 
 
-# Re-export the AppSettings class for backward compatibility
-from app.config import AppSettings
+# Re-export the Settings class for backward compatibility
+from app.config import Settings as AppSettings
 
 # Re-export the settings instance for backward compatibility
 settings = get_app_settings()

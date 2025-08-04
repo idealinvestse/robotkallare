@@ -4,13 +4,20 @@ import sqlite3
 from sqlmodel import SQLModel, create_engine, Session
 from app.config import get_settings
 
-settings = get_settings()
-engine = create_engine(settings.SQLITE_DB, echo=False)
+# Get settings with fallback for testing
+try:
+    settings = get_settings()
+    database_url = getattr(settings, 'DATABASE_URL', 'sqlite:///./gdial.db')
+except Exception as e:
+    logging.warning(f"Settings loading failed: {e}. Using fallback database configuration.")
+    database_url = 'sqlite:///./gdial.db'
+
+engine = create_engine(database_url, echo=False)
 
 def add_column_if_not_exists(table_name, column_name, column_type):
     """Add a column to the database if it doesn't exist"""
     try:
-        db_path = settings.SQLITE_DB.replace("sqlite:///", "")
+        db_path = database_url.replace("sqlite:///", "")
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
@@ -31,7 +38,7 @@ def add_column_if_not_exists(table_name, column_name, column_type):
 
 def create_db_and_tables() -> None:
     # Update schema if needed for existing tables
-    db_path = settings.SQLITE_DB.replace("sqlite:///", "")
+    db_path = database_url.replace("sqlite:///", "")
     if os.path.exists(db_path):
         # Add new columns to existing tables
         # CallLog table

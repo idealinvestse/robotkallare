@@ -17,7 +17,7 @@ class OutboxJob(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     service: str  # e.g. "rabbitmq" or "twilio"
-    payload: Optional[dict] = Field(default=None, sa_column=Column(JSON))  # JSON-serializable dict of args/kwargs
+    payload: Optional[dict] = Field(default=None, sa_column_kwargs={"type_": JSON})  # JSON-serializable dict of args/kwargs
     attempts: int = 0
     last_error: Optional[str] = None
     status: OutboxJobStatus = Field(default=OutboxJobStatus.PENDING)
@@ -152,7 +152,7 @@ class ScheduledMessage(SQLModel, table=True):
     schedule_time: datetime
     recurring: bool = False
     recurrence_pattern: Optional[str] = None  # "daily", "weekly", "monthly"
-    dtmf_responses: Optional[dict] = Field(default=None, sa_column=Column(JSON))  # For custom DTMF responses
+    dtmf_responses: Optional[dict] = Field(default=None, sa_column_kwargs={"type_": JSON})  # For custom DTMF responses
     active: bool = True
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
@@ -167,7 +167,7 @@ class CustomMessageLog(SQLModel, table=True):
     contact_id: uuid.UUID = Field(foreign_key="contact.id")
     message_content: str
     message_type: str  # "call" or "sms"
-    dtmf_responses: Optional[dict] = Field(default=None, sa_column=Column(JSON))  # For custom DTMF responses
+    dtmf_responses: Optional[dict] = Field(default=None, sa_column_kwargs={"type_": JSON})  # For custom DTMF responses
     created_at: datetime = Field(default_factory=datetime.now)
 
 class SmsLog(SQLModel, table=True):

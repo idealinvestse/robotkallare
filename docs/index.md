@@ -13,6 +13,7 @@ Välkommen till den centrala dokumentationshubben för GDial-projektet. Denna si
 1. **[👨‍💻 Kodningsriktlinjer](code-guidelines.md)** - Utvecklingsstandards för AI-agenter
 2. **[⚙️ Installation & Utveckling](DOCUMENTATION.md)** - Detaljerad setup och utvecklingsguide
 3. **[🔧 Teknisk arkitektur](PROJECT_OVERVIEW.md)** - Djupgående systemöversikt
+4. **[🎨 Frontend Dokumentation](frontend/README.md)** - React-applikation och komponentstruktur
 
 ### 🚀 För deployment
 1. **[🐳 Docker Deployment](docker-README.md)** - Container-baserad deployment
@@ -32,7 +33,7 @@ Välkommen till den centrala dokumentationshubben för GDial-projektet. Denna si
 
 ### 👨‍💻 Utveckling
 - **[Kodningsriktlinjer](code-guidelines.md)** - Utvecklingsstandards specifikt för AI Windsurf-agenter
-- **[Frontend Dokumentation](frontend/)** - React-applikation och komponentstruktur
+- **[Frontend Dokumentation](frontend/README.md)** - React-applikation och komponentstruktur
 
 ### 🚀 Deployment & Infrastruktur
 - **[Docker Setup](docker-README.md)** - Container-baserad deployment med Docker Compose

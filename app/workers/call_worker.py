@@ -8,7 +8,8 @@ from datetime import datetime
 import pika
 import signal
 from typing import Dict, Any
-from sqlmodel import Session, select, selectinload
+from sqlmodel import Session, select
+from sqlalchemy.orm import selectinload
 
 # Add project root to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
