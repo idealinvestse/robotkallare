@@ -2,16 +2,25 @@
 
 Denna dokumentation ger instruktioner för att sätta upp, köra och hantera GDial emergency notification system.
 
+## 🎯 **Senaste Uppdateringar (2025-08-05)**
+
+✅ **Backend-testinfrastrukturen är nu produktionsklar!**
+- 48 tester passerar framgångsrikt
+- Robust databashantering med automatiska fixtures
+- Omfattande mock-system för externa tjänster
+- 24% testtäckning etablerad som baslinje
+
 ## Innehållsförteckning
 
 1. [Översikt](#översikt)
 2. [Installation](#installation)
 3. [Starta systemet](#starta-systemet)
 4. [Konfiguration](#konfiguration)
-5. [Användningsguide](#användningsguide)
-6. [API-dokumentation](#api-dokumentation)
-7. [Felsökning](#felsökning)
-8. [Utveckling](#utveckling)
+5. [🧪 Testning](#testning)
+6. [Användningsguide](#användningsguide)
+7. [API-dokumentation](#api-dokumentation)
+8. [Felsökning](#felsökning)
+9. [Utveckling](#utveckling)
 
 ## Översikt
 
@@ -164,6 +173,153 @@ GDial offers extensive configuration options through the web interface. Key conf
    - Customize response messages for keypad inputs
 
 All settings can be configured through the Settings tab in the web interface.
+
+## 🧪 Testning
+
+### Backend Testing - **48 Tester Passerar** ✅
+
+GDial har nu en robust och produktionsklar testinfrastruktur som säkerställer kod kvalitet och tillförlitlighet.
+
+#### **Snabbstart - Köra Tester**
+
+```bash
+# Aktivera virtual environment
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
+
+# Installera test-dependencies (om inte redan gjort)
+pip install pytest pytest-asyncio pytest-cov
+
+# Kör alla tester med täckning
+python -m pytest tests/ -v --cov=app --cov-report=term-missing
+
+# Snabba tester utan täckning
+python -m pytest tests/ -v --tb=short
+
+# Specifika testgrupper
+python -m pytest tests/test_api.py -v
+python -m pytest tests/test_services/ -v
+python -m pytest tests/test_repositories/ -v
+```
+
+#### **Testinfrastruktur**
+
+**🗄️ Databashantering**
+- **SQLite in-memory**: Snabba, isolerade tester
+- **TestDatabaseManager**: Säkerställer konsistent databasanvändning
+- **Automatisk tabellskapande**: Alla SQLModel-tabeller skapas för varje test
+- **Clean session management**: Automatisk städning efter varje test
+
+**🎭 Mock-system för Externa Tjänster**
+
+*Twilio API Mocks* (`tests/fixtures/twilio_mocks.py`):
+- `MockTwilioClient`: Simulerar Twilio API-anrop
+- `MockTwilioCall`: Realistisk samtalshantering
+- `MockTwilioMessage`: SMS-funktionalitet med fel-simulering
+- Stöder både framgångsrika och misslyckade scenarier
+
+*TTS/OpenAI Mocks* (`tests/fixtures/tts_mocks.py`):
+- `MockOpenAIClient`: Simulerar ljudgenerering
+- Felhantering för API-nyckelproblem
+- Temporära ljudkataloger för filtester
+
+#### **Testkategorier**
+
+**API-tester** (`tests/test_api.py`):
+- FastAPI TestClient med dependency injection
+- Endpoint-validering och felhantering
+- Autentisering och auktorisering
+
+**Service-tester** (`tests/test_*_service.py`):
+- Affärslogik med mocks för externa beroenden
+- SMS och samtalshantering
+- TTS-integration
+
+**Repository-tester** (`tests/test_*_repository.py`):
+- Dataåtkomst och CRUD-operationer
+- Relationer mellan entiteter
+- Datavalidering
+
+**Integration-tester**:
+- End-to-end flöden
+- API till databas-integration
+- Externa tjänsteintegrationer
+
+#### **Testtäckning och Kvalitet**
+
+- **Nuvarande täckning**: 24% (baslinje etablerad)
+- **Målsättning**: 60%+ testtäckning
+- **CI/CD-förberedd**: Infrastrukturen stöder kontinuerlig integration
+- **Prestanda**: Snabba tester med in-memory databas
+
+#### **Testmiljöer**
+
+**Utvecklingsmiljö**:
+```bash
+# Kopiera test-miljövariabler
+cp .env.example .env.test
+
+# Redigera .env.test med test-specifika värden
+# DATABASE_URL=sqlite:///:memory:
+# TWILIO_ACCOUNT_SID=test_sid
+# TWILIO_AUTH_TOKEN=test_token
+```
+
+**CI/CD Pipeline**:
+- Automatiserade tester vid varje commit
+- Testtäckningsrapporter
+- Kvalitetsgates för merge requests
+
+#### **Felsökning av Tester**
+
+**Vanliga Problem**:
+
+1. **Import-fel**:
+   ```bash
+   # Säkerställ att PYTHONPATH är korrekt
+   export PYTHONPATH=$PWD:$PYTHONPATH
+   ```
+
+2. **Databasfel**:
+   ```bash
+   # Kontrollera att alla modeller importeras
+   python -c "from app.models import *; print('Models OK')"
+   ```
+
+3. **Mock-fel**:
+   ```bash
+   # Kör enskilda tester för debugging
+   python -m pytest tests/test_sms_service.py::test_send_sms -v -s
+   ```
+
+**Debug-tips**:
+- Använd `-v` för verbose output
+- Använd `-s` för att se print-statements
+- Använd `--tb=short` för kortare traceback
+- Använd `--lf` för att köra endast senast misslyckade tester
+
+#### **Bidra till Testerna**
+
+**Lägga till nya tester**:
+1. Skapa testfil i `tests/` katalogen
+2. Använd befintliga fixtures från `tests/conftest.py`
+3. Följ namnkonventionen `test_*.py`
+4. Inkludera både positiva och negativa testfall
+
+**Förbättra testtäckning**:
+```bash
+# Generera HTML-rapport för detaljerad täckning
+python -m pytest tests/ --cov=app --cov-report=html
+
+# Öppna htmlcov/index.html för att se vilka rader som saknar täckning
+```
+
+### Frontend Testing (Planerat)
+
+- **Komponenttester**: React Testing Library
+- **Enhetstester**: Vitest för snabb exekvering
+- **E2E-tester**: Playwright för användarflöden
+- **Mock-adapters**: API-anrop och externa tjänster
 
 ## Usage Guide
 

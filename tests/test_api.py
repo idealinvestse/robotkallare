@@ -1,12 +1,11 @@
-from fastapi.testclient import TestClient
-from app.main import app
+import pytest
 import uuid
 from datetime import datetime
 from app.models import Message
 from app.schemas import MessageCreate
 
-def test_health():
-    client = TestClient(app)
+def test_health(client):
+    """Test the health endpoint."""
     r = client.get("/health")
     assert r.status_code == 200
     
@@ -25,8 +24,8 @@ def test_health():
     assert data["status"] == "ok"
     assert data["api"] == "running"
 
-def test_create_message():
-    client = TestClient(app)
+def test_create_message(client):
+    """Test creating a message via API."""
     message_data = {
         "name": "Test Message",
         "content": "This is a test message",

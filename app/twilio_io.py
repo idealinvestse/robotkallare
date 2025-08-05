@@ -16,9 +16,21 @@ from .models import Message
 # Get settings with fallback for testing
 try:
     settings = get_settings()
-    twilio_auth_token = getattr(settings, 'TWILIO_AUTH_TOKEN', 'test_auth_token_32_characters_min')
+    twilio_auth_token = getattr(settings, 'TWILIO_AUTH_TOKEN', None)
+    if not twilio_auth_token:
+        twilio_auth_token = 'test_auth_token_32_characters_min'
 except Exception:
     twilio_auth_token = 'test_auth_token_32_characters_min'
+    # Create a minimal settings object for fallback
+    class FallbackSettings:
+        PUBLIC_URL = None
+        SKIP_TWILIO_VALIDATION = True
+        CALL_TIMEOUT_SEC = 25
+        TWILIO_ACCOUNT_SID = 'ACtest1234567890123456789012345678'
+        TWILIO_FROM_NUMBER = '+1234567890'
+        API_HOST = '127.0.0.1'
+        API_PORT = 8000
+    settings = FallbackSettings()
 
 validator = RequestValidator(twilio_auth_token)
 
@@ -26,11 +38,12 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 # Log configuration at startup
 logging.info(f"Twilio configuration:")
-logging.info(f"  PUBLIC_URL: {settings.PUBLIC_URL}")
-logging.info(f"  SKIP_TWILIO_VALIDATION: {settings.SKIP_TWILIO_VALIDATION}")
-logging.info(f"  CALL_TIMEOUT_SEC: {settings.CALL_TIMEOUT_SEC}")
-logging.info(f"  TWILIO_ACCOUNT_SID: {settings.TWILIO_ACCOUNT_SID[:6]}... (masked)")
-logging.info(f"  TWILIO_FROM_NUMBER: {settings.TWILIO_FROM_NUMBER}")
+logging.info(f"  PUBLIC_URL: {getattr(settings, 'PUBLIC_URL', 'Not set')}")
+logging.info(f"  SKIP_TWILIO_VALIDATION: {getattr(settings, 'SKIP_TWILIO_VALIDATION', True)}")
+logging.info(f"  CALL_TIMEOUT_SEC: {getattr(settings, 'CALL_TIMEOUT_SEC', 25)}")
+twilio_sid = getattr(settings, 'TWILIO_ACCOUNT_SID', 'Not set')
+logging.info(f"  TWILIO_ACCOUNT_SID: {twilio_sid[:6] if twilio_sid else 'Not set'}... (masked)")
+logging.info(f"  TWILIO_FROM_NUMBER: {getattr(settings, 'TWILIO_FROM_NUMBER', 'Not set')}")
 
 async def validate_twilio_request(request: Request) -> None:
     # Skip validation in development environments

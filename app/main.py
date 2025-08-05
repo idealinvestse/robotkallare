@@ -148,9 +148,11 @@ app = FastAPI(title="GDial Emergency Notification System API", lifespan=lifespan
 # CORS configuration to allow requests from any origin during development
 # CORS configuration - restrict origins in production
 # Use CORS_ORIGINS from settings, which can be overridden by environment variables
-allowed_origins = settings.CORS_ORIGINS.split(",") if settings.CORS_ORIGINS else []
+cors_origins = getattr(settings, 'CORS_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
+allowed_origins = cors_origins.split(",") if cors_origins else []
 
-if settings.ENVIRONMENT == "development":
+environment = getattr(settings, 'ENVIRONMENT', 'development')
+if environment == "development":
     # In development, allow all origins for easier testing
     app.add_middleware(
         CORSMiddleware,

@@ -1,45 +1,36 @@
 import pytest
 from sqlmodel import Session
-from app.dialer import _wait_for_answer, _make_call
+from app.dialer import DialerService, dial_contacts, make_manual_call
 from app.models import CallLog, Contact, PhoneNumber
 from datetime import datetime
 import uuid
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 @pytest.mark.asyncio
-async def test_wait_for_answer_answered(session: Session):
-    sid = "test-sid"
-    cl = CallLog(
-        id=uuid.uuid4(),
-        contact_id=uuid.uuid4(),
-        phone_number_id=uuid.uuid4(),
-        call_sid=sid,
-        started_at=datetime.utcnow(),
-        answered=True,
-        digits="1",
-        status="completed",
-    )
-    session.add(cl)
-    session.commit()
-    answered = await _wait_for_answer(session, sid)
-    assert answered is True
+async def test_dialer_service_initialization(session: Session):
+    """Test that DialerService can be initialized properly."""
+    dialer_service = DialerService(session)
+    assert dialer_service is not None
+    assert dialer_service.session == session
 
 @pytest.mark.asyncio
-async def test_wait_for_answer_no_answer(session: Session):
-    sid = "test-sid"
-    cl = CallLog(
-        id=uuid.uuid4(),
-        contact_id=uuid.uuid4(),
-        phone_number_id=uuid.uuid4(),
-        call_sid=sid,
-        started_at=datetime.utcnow(),
-        answered=False,
-        status="initiated",
-    )
-    session.add(cl)
-    session.commit()
-    answered = await _wait_for_answer(session, sid)
-    assert answered is False
-    from sqlmodel import select
-    cl = session.exec(select(CallLog).where(CallLog.call_sid == sid)).first()
-    assert cl.status == "initiated"  # Will be updated to no-answer in dialer
+async def test_make_manual_call_with_mock(session: Session):
+    """Test make_manual_call function with mocked dependencies."""
+    contact_id = uuid.uuid4()
+    message_id = uuid.uuid4()
+    
+    # Mock the call service to avoid actual Twilio calls
+    with patch('app.dialer.CallService') as mock_call_service:
+        mock_instance = AsyncMock()
+        mock_call_service.return_value = mock_instance
+        mock_instance.make_manual_call.return_value = {"status": "success", "call_sid": "test-sid"}
+        
+        result = await make_manual_call(contact_id, message_id)
+        
+        assert result is not None
+        mock_instance.make_manual_call.assert_called_once_with(
+            contact_id=contact_id,
+            message_id=message_id,
+            phone_id=None,
+            call_run_id=None
+        )

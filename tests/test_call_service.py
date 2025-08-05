@@ -9,6 +9,7 @@ from twilio.base.exceptions import TwilioRestException
 
 from app.services.call_service import CallService
 from app.models import Contact, PhoneNumber, CallLog, CallRun
+from tests.fixtures.twilio_mocks import MockTwilioClient, failing_twilio_client
 
 
 class TestCallService:
@@ -22,7 +23,7 @@ class TestCallService:
     @pytest.fixture
     def mock_twilio_client(self):
         """Create a mock Twilio client."""
-        return Mock()
+        return MockTwilioClient()
     
     @pytest.fixture
     def call_service(self, mock_session, mock_twilio_client):

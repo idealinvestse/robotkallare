@@ -1,24 +1,46 @@
 import os
 import pytest
-from sqlmodel import SQLModel, create_engine, Session
-from app.database import get_session
+from fastapi.testclient import TestClient
 
-# Set test environment file
+# Set test environment file before any imports
 os.environ.setdefault('ENV_FILE', '.env.test')
 
-@pytest.fixture
-def session():
-    """Create a test database session with in-memory SQLite."""
-    engine = create_engine("sqlite:///:memory:", echo=False)
-    SQLModel.metadata.create_all(engine)
-    with Session(engine) as session:
-        yield session
+from app.main import app
+from app.database import get_session
 
-@pytest.fixture
-def test_client():
-    """Create a test client for API testing."""
-    from fastapi.testclient import TestClient
-    from app.main import app
+# Import comprehensive database test fixtures
+from tests.fixtures.database_test_fixtures import (
+    test_db_manager,
+    test_engine,
+    test_session,
+    populated_test_session,
+    get_test_session_override
+)
+
+# Import other fixtures
+from tests.fixtures.twilio_mocks import mock_twilio_client
+from tests.fixtures.tts_mocks import mock_openai_client
+
+
+@pytest.fixture(scope="function")
+def session(test_session):
+    """Create a test database session using the comprehensive database fixture."""
+    return test_session
+
+
+@pytest.fixture(scope="function")
+def populated_session(populated_test_session):
+    """Create a test database session with populated data."""
+    return populated_test_session
+
+
+@pytest.fixture(scope="function")
+def client(test_db_manager):
+    """Create a test client with overridden database session using the shared engine."""
+    # Override the get_session dependency to use our test database manager
+    app.dependency_overrides[get_session] = get_test_session_override(test_db_manager)
     
-    with TestClient(app) as client:
-        yield client
+    client = TestClient(app)
+    yield client
+    
+    app.dependency_overrides.clear()

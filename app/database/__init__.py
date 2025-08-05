@@ -18,4 +18,13 @@ def get_session():
     with Session(engine) as session:
         yield session
 
-__all__ = ['get_session', 'engine']
+def create_db_and_tables():
+    """Create database tables from SQLModel metadata."""
+    try:
+        SQLModel.metadata.create_all(engine)
+        logging.info("Database tables created/verified successfully")
+    except Exception as e:
+        logging.error(f"Failed to create database tables: {e}")
+        raise
+
+__all__ = ['get_session', 'engine', 'create_db_and_tables']
