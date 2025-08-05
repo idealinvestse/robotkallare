@@ -23,10 +23,11 @@ logger = logging.getLogger(__name__)
 class ValidationError(Exception):
     """Custom validation error with detailed information."""
     
-    def __init__(self, message: str, field: str = None, value: Any = None):
+    def __init__(self, message: str, field: str = None, value: Any = None, details: Any = None):
         self.message = message
         self.field = field
         self.value = value
+        self.details = details
         super().__init__(message)
 
 
