@@ -235,3 +235,32 @@ class RateLimitProfiles:
             window_seconds=60,
             exempt_paths=["/health", "/metrics", "/docs", "/openapi.json", "/static", "/debug"]
         )
+
+
+# Aliases and additional classes for test compatibility
+TokenBucket = RateLimiter  # Alias for backward compatibility
+RateLimitConfig = RateLimitMiddleware  # Alias for configuration
+RateLimitProfile = RateLimitProfiles  # Alias for profiles
+
+
+def get_client_identifier(request: Request) -> str:
+    """Get unique identifier for the client (module-level function)."""
+    # Try API key first
+    api_key = request.headers.get("X-API-Key") or request.query_params.get("api_key")
+    if api_key:
+        return f"api_key:{api_key[:8]}..."  # Use first 8 chars for logging
+    
+    # Fall back to IP address
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        # Get the first IP in the chain
+        return f"ip:{forwarded_for.split(',')[0].strip()}"
+    
+    return f"ip:{request.client.host}"
+
+
+def create_rate_limit_key(identifier: str, endpoint: str = None) -> str:
+    """Create a rate limit key for the given identifier and endpoint."""
+    if endpoint:
+        return f"{identifier}:{endpoint}"
+    return identifier

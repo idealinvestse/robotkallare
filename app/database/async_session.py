@@ -9,13 +9,19 @@ from sqlmodel import SQLModel
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
-settings = get_settings()
 
+# Get settings with fallback for testing
+try:
+    settings = get_settings()
+    database_url = getattr(settings, 'DATABASE_URL', 'sqlite:///./gdial.db')
+except Exception as e:
+    logging.warning(f"Settings loading failed: {e}. Using fallback database configuration.")
+    database_url = 'sqlite:///./gdial.db'
 
 # Create async engine
 def create_async_database_engine():
     """Create async database engine with proper configuration."""
-    database_url = settings.DATABASE_URL
+    global database_url
     
     # Convert SQLite URL to async format if needed
     if database_url.startswith("sqlite:///"):

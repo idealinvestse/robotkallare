@@ -139,3 +139,15 @@ def get_cached_value(key: str) -> Optional[Any]:
 def get_di_container() -> DIContainer:
     """FastAPI dependency for the DI container."""
     return get_container()
+
+def get_database_session() -> Session:
+    """FastAPI dependency for getting database session."""
+    return get_container().get_database_session()
+
+def get_settings_service():
+    """FastAPI dependency for getting settings service."""
+    return get_container().get_settings()
+
+def get_cache_manager():
+    """FastAPI dependency for getting cache manager."""
+    return get_container()

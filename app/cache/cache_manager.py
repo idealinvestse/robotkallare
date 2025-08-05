@@ -321,3 +321,7 @@ def get_message_cache() -> MessageCache:
 def get_tts_cache() -> TTSCache:
     """Get the TTS cache instance."""
     return tts_cache
+
+
+# Alias for backward compatibility
+async_cache_result = cache_async_result

@@ -6,7 +6,6 @@ from datetime import datetime
 
 from app.services.dialer_service import DialerService
 from app.models import Contact, Message, CallRun, PhoneNumber
-from app.tests.conftest import async_session_fixture
 
 
 @pytest.fixture

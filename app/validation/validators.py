@@ -446,3 +446,68 @@ def sanitize_string(value: str, max_length: int = 1000) -> str:
         raise ValidationError(f"String too long (max {max_length} characters)", "value", value)
     
     return sanitized
+
+
+# Module-level convenience functions for easier importing
+def validate_phone_number(phone: str, allow_international: bool = True) -> str:
+    """Convenience function for phone number validation."""
+    return PhoneNumberValidator.validate_phone_number(phone, allow_international)
+
+def validate_uuid(value, field_name: str = "id"):
+    """Convenience function for UUID validation."""
+    return UUIDValidator.validate_uuid(value, field_name)
+
+def validate_uuid_list(values, field_name: str = "ids"):
+    """Convenience function for UUID list validation."""
+    return UUIDValidator.validate_uuid_list(values, field_name)
+
+def validate_message_content(content: str, max_length: int = None) -> str:
+    """Convenience function for message content validation."""
+    return MessageValidator.validate_message_content(content, max_length)
+
+def validate_message_type(message_type: str) -> str:
+    """Convenience function for message type validation."""
+    return MessageValidator.validate_message_type(message_type)
+
+def validate_message(content: str, message_type: str = None, max_length: int = None) -> dict:
+    """Convenience function for complete message validation."""
+    result = {
+        'content': validate_message_content(content, max_length)
+    }
+    if message_type:
+        result['message_type'] = validate_message_type(message_type)
+    return result
+
+def validate_contact_name(name: str) -> str:
+    """Convenience function for contact name validation."""
+    return ContactValidator.validate_contact_name(name)
+
+def validate_contact_email(email: str) -> str:
+    """Convenience function for contact email validation."""
+    return ContactValidator.validate_email(email)
+
+def validate_dtmf_digit(digit: str) -> str:
+    """Convenience function for DTMF digit validation."""
+    return DTMFValidator.validate_dtmf_digit(digit)
+
+def validate_dtmf_response(response: dict) -> dict:
+    """Convenience function for DTMF response validation."""
+    return DTMFValidator.validate_dtmf_response(response)
+
+def sanitize_string_input(value: str, max_length: int = 1000) -> str:
+    """Alias for sanitize_string function."""
+    return sanitize_string(value, max_length)
+
+
+class RequestValidator:
+    """Validator for API request data."""
+    
+    @classmethod
+    def validate_request(cls, data: dict, validators: dict) -> dict:
+        """Validate request data using provided validators."""
+        return validate_request_data(data, validators)
+    
+    @classmethod
+    def sanitize_input(cls, value: str, max_length: int = 1000) -> str:
+        """Sanitize input string."""
+        return sanitize_string(value, max_length)
