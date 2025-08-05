@@ -62,7 +62,7 @@ class OutreachService:
         campaign_name: Optional[str] = None,
         description: Optional[str] = None,
         user_id: Optional[uuid.UUID] = None, # Assuming User model and auth integration
-        call_mode: str = "tts" # Default to TTS for backward compatibility
+
     ) -> OutreachCampaign:
         """Initiates a combined Call + SMS outreach campaign.
 
@@ -75,16 +75,13 @@ class OutreachService:
         if not (bool(group_id) ^ bool(contact_ids)):
             raise ValueError("Either group_id or contact_ids must be provided")
 
-        # Message validation depends on call mode
-        message = None
-        if call_mode != "realtime_ai":
-            # Non-realtime modes require a valid message
-            if not message_id:
-                raise ValueError("message_id is required unless call_mode is realtime_ai")
-                
-            message = self.message_repo.get_message_by_id(message_id)
-            if not message:
-                raise ValueError(f"Message with ID {message_id} not found")
+        # Message validation
+        if not message_id:
+            raise ValueError("message_id is required")
+            
+        message = self.message_repo.get_message_by_id(message_id)
+        if not message:
+            raise ValueError(f"Message with ID {message_id} not found")
 
         # --- 2. Retrieve Contacts ---
         contacts_to_reach: List[Contact] = []
@@ -120,7 +117,7 @@ class OutreachService:
         campaign = OutreachCampaign(
             name=campaign_name or f"Campaign {datetime.now().strftime('%Y-%m-%d %H:%M')}",
             description=description,
-            message_id=message_id,  # For realtime_ai, this will be None
+            message_id=message_id,
             target_group_id=group_id,
             target_contact_count=len(valid_contacts), # Base count on contacts we will actually queue
             queued_contact_count=0,

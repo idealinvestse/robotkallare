@@ -89,9 +89,7 @@ def create_db_and_tables() -> None:
     # Create all tables including new ones
     SQLModel.metadata.create_all(engine)
     
-    # Verify RealtimeCall table columns - added 2025-05-04
-    add_column_if_not_exists("realtimecall", "metadata", "JSON")
-    add_column_if_not_exists("realtimecall", "duration_seconds", "INTEGER")
+
 
 def get_session():
     # Ensure engine is initialized before use
