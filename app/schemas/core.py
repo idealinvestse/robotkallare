@@ -93,6 +93,7 @@ class MessageResponse(BaseModel):
     content: str
     is_template: bool
     message_type: str
+    active: bool
     created_at: datetime
     updated_at: datetime
     

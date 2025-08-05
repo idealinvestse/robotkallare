@@ -16,7 +16,7 @@ from pathlib import Path
 from app.utils.phone_util import validate_phone_number, format_phone_for_display
 
 # Local application imports
-from app.database import get_session, create_db_and_tables, engine
+from app.database_package import get_session, create_db_and_tables, engine
 from app.settings import SystemSetting, DtmfSetting, SmsSettings, NotificationSettings, settings 
 from app.twilio_io import build_twiml, validate_twilio_request
 from app.settings_api import router as settings_router
@@ -57,6 +57,10 @@ async def lifespan(app: FastAPI):
     # FIRST: Validate environment variables before any other startup logic
     from app.config.env_validator import EnvironmentValidator
     EnvironmentValidator.validate_startup()
+    
+    # Initialize database engine with proper environment configuration
+    from app.database_package import init_database_engine
+    init_database_engine()
     
     # Startup logic moved from on_startup
     logging.info("Lifespan: Startup sequence initiating...")

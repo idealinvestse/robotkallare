@@ -35,18 +35,23 @@ class TestDatabaseManager:
     def create_engine(self):
         """Create a test database engine with all tables."""
         if self.engine is None:
-            self.engine = create_engine(
-                "sqlite:///:memory:",
-                echo=False,
-                connect_args={"check_same_thread": False}
-            )
+            # Set test environment variables
+            import os
+            os.environ.setdefault('ENV_FILE', '.env.test')
+            os.environ.setdefault('ENVIRONMENT', 'testing')
+            
+            # Initialize database engine with test configuration
+            from app.database import init_database_engine, create_db_and_tables
+            
+            # Initialize the engine
+            self.engine = init_database_engine()
             
             # Ensure all models are imported and registered
             import app.models
             import app.config.settings_models
             
             # Create all tables from SQLModel metadata
-            SQLModel.metadata.create_all(self.engine)
+            create_db_and_tables()
         
         return self.engine
     

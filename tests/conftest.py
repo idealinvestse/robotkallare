@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 os.environ.setdefault('ENV_FILE', '.env.test')
 
 from app.main import app
-from app.database import get_session
+from app.database_package import get_session
 
 # Import comprehensive database test fixtures
 from tests.fixtures.database_test_fixtures import (

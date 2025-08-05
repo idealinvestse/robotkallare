@@ -118,6 +118,7 @@ class Message(SQLModel, table=True):
     content: str
     is_template: bool = True
     message_type: str = "voice"  # voice, sms, or both
+    active: bool = True
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     outreach_campaigns: List["OutreachCampaign"] = Relationship(back_populates="message", sa_relationship_kwargs={"lazy": "selectin", "primaryjoin": "Message.id == OutreachCampaign.message_id"})
