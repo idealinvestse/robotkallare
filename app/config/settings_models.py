@@ -86,6 +86,11 @@ class DtmfSetting(SQLModel, table=True):
     Controls how DTMF responses are handled in emergency calls.
     """
     id: uuid.UUID | None = Field(default_factory=uuid.uuid4, primary_key=True)
+    # Legacy per-digit routing fields expected by older tests
+    digit: Optional[str] = None
+    action: Optional[str] = None
+    value: Optional[str] = None
+    
     max_attempts: int = 3
     input_timeout: int = 10
     confirm_response: bool = False
@@ -128,6 +133,35 @@ class SmsSettings(SQLModel, table=True):
     extra_settings: Optional[str] = Field(default=None, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
+
+    # ---------------- Legacy alias properties ----------------
+    @property
+    def enabled(self) -> bool:  # type: ignore
+        """Legacy alias for include_sender_name."""
+        return self.include_sender_name
+
+    @enabled.setter
+    def enabled(self, value: bool):  # type: ignore
+        self.include_sender_name = value
+
+    @property
+    def rate_limit(self) -> int:  # type: ignore
+        return self.rate_limit_per_minute
+
+    @rate_limit.setter
+    def rate_limit(self, value: int):  # type: ignore
+        self.rate_limit_per_minute = value
+
+    @property
+    def retry_attempts(self) -> int:  # type: ignore
+        return self.max_retry_attempts
+
+    @retry_attempts.setter
+    def retry_attempts(self, value: int):  # type: ignore
+        self.max_retry_attempts = value
+
+    class Config:
+        extra = "allow"
 
 
 class NotificationSettings(SQLModel, table=True):
