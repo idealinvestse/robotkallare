@@ -26,6 +26,12 @@ from app.api_auth import router as auth_router
 from app.api.webhooks import router as webhooks_router
 from app.api.outreach import router as outreach_router
 from app.api.crisis_management import router as crisis_router
+from app.api.test_health import router as test_health_router
+
+# Import core modules for error handling, rate limiting, and health checks
+from app.core.error_handlers import register_error_handlers
+from app.core.rate_limiter import RateLimitMiddleware, get_rate_limiter
+from app.core.health_check import router as health_router
 from app.schemas import (
     Stats, 
     ContactResponse, PhoneNumberResponse, CallLogResponse, SmsLogResponse,
@@ -148,7 +154,14 @@ async def lifespan(app: FastAPI):
         logging.info("Lifespan: No active RabbitMQ connection to close.")
 
 
-app = FastAPI(title="GDial Emergency Notification System API", lifespan=lifespan)
+app = FastAPI(title="GDial API", version="1.0.0", lifespan=lifespan)
+
+# Setup error handling
+register_error_handlers(app)
+
+# Add rate limiting middleware
+rate_limiter = get_rate_limiter()
+app.add_middleware(RateLimitMiddleware, rate_limiter=rate_limiter)
 
 # CORS configuration to allow requests from any origin during development
 # CORS configuration - restrict origins in production
@@ -184,6 +197,8 @@ app.include_router(contacts_groups_router)
 app.include_router(webhooks_router, prefix="/api/v1")
 app.include_router(outreach_router, prefix="/api/v1")
 app.include_router(crisis_router, prefix="/api/v1")
+app.include_router(health_router)  # Health check endpoints
+app.include_router(test_health_router)  # Test health endpoints for debugging
 
 # Serve static files - single mount point for both paths
 app.mount("/ringbot/static", StaticFiles(directory="static"), name="static")
@@ -214,26 +229,7 @@ burn_message_page = create_html_route_handler("burn-message", "burn-message.html
 burn_sms_page = create_html_route_handler("burn-sms", "burn-sms.html")
 settings_page = create_html_route_handler("settings", "settings.html")
 
-@app.get("/health")
-async def health_check(session: Session = Depends(get_session)):
-    """Health check endpoint with system status information."""
-    health_data = {
-        "status": "ok",
-        "time": datetime.now().isoformat(),
-        "version": "1.0.0",
-        "database": "connected" if session else "disconnected",
-        "api": "running"
-    }
-    
-    # Test database connection
-    try:
-        session.exec(select(1)).one()
-        health_data["database_status"] = "healthy"
-    except Exception as e:
-        health_data["database_status"] = "error"
-        health_data["database_error"] = str(e)
-        
-    return health_data
+# Health check endpoint is now provided by the health_check module router
 
 # Message endpoints
 @app.post("/messages", response_model=MessageResponse, status_code=201)
