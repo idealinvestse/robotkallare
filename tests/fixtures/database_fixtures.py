@@ -20,7 +20,7 @@ from app.models import (
 
 # Import settings models to ensure they're also registered
 from app.config.settings_models import (
-    SystemSetting, TwilioSetting, OpenAISetting, RabbitMQSetting
+    SystemSetting, DtmfSetting, SmsSettings, NotificationSettings, SecuritySettings
 )
 
 

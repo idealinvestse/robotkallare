@@ -25,6 +25,7 @@ from app.api_contacts_groups import router as contacts_groups_router
 from app.api_auth import router as auth_router
 from app.api.webhooks import router as webhooks_router
 from app.api.outreach import router as outreach_router
+from app.api.crisis_management import router as crisis_router
 from app.schemas import (
     Stats, 
     ContactResponse, PhoneNumberResponse, CallLogResponse, SmsLogResponse,
@@ -182,6 +183,7 @@ app.include_router(auth_router)
 app.include_router(contacts_groups_router)
 app.include_router(webhooks_router, prefix="/api/v1")
 app.include_router(outreach_router, prefix="/api/v1")
+app.include_router(crisis_router, prefix="/api/v1")
 
 # Serve static files - single mount point for both paths
 app.mount("/ringbot/static", StaticFiles(directory="static"), name="static")

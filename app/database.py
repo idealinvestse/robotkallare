@@ -91,6 +91,14 @@ def create_db_and_tables() -> None:
     
 
 
+def get_engine():
+    """Get the database engine, initializing it if necessary."""
+    global engine
+    if engine is None:
+        engine = init_database_engine()
+    return engine
+
+
 def get_session():
     # Ensure engine is initialized before use
     global engine
